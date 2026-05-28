@@ -1,0 +1,5 @@
+import model ALP_linear
+# Photon is `a`; ALP label must be verified in models/ALP_linear/particles.py.
+generate e+ e- > ax a
+output PROC_fccee_signal
+

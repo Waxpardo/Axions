@@ -1,0 +1,10 @@
+# HTCondor scan scaffold.
+# Queue over the mass grid after condor/run_point.sh is implemented.
+
+executable = condor/run_point.sh
+arguments =
+output = results/condor_$(Cluster)_$(Process).out
+error = results/condor_$(Cluster)_$(Process).err
+log = results/condor_$(Cluster).log
+queue 1
+

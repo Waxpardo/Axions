@@ -1,0 +1,4 @@
+# Placeholder param card.
+# Generate a model-specific template from MG5 after installing ALP_linear,
+# then use mc/make_param_card.py to write mass, coupling, and width per point.
+
