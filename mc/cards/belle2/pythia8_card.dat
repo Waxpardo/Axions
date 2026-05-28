@@ -1,12 +1,2 @@
 ! Belle II Pythia8 skeleton for LHE input.
-Beams:frameType = 4
-Beams:LHEF = unweighted_events.lhe.gz
-PartonLevel:MPI = off
-PartonLevel:ISR = on
-PartonLevel:FSR = on
-HadronLevel:all = off
-
-! Fill ALP PDG id and lifetime after UFO inspection.
-! <alp_id>:mayDecay = on
-! <alp_id>:tau0 = <ctau_mm>
 
