@@ -13,3 +13,8 @@ PROC_*/
 *.log
 *.out
 *.err
+*.hepmc
+*.root
+*.gz
+bbbar_test/
+MG5_aMC_v3_7_1/
