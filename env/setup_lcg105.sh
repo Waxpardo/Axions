@@ -65,3 +65,9 @@ echo ""
 echo "======================================"
 echo "Setup complete!"
 echo "======================================"
+
+# Delphes 3.5.0 from CVMFS.
+# AlmaLinux 9 is RHEL-compatible, so use the CentOS 9 GCC11 build.
+export DELPHES_DIR=/cvmfs/sft.cern.ch/lcg/releases/delphes/3.5.0-05f0f/x86_64-centos9-gcc11-opt
+export PATH="$DELPHES_DIR/bin:$PATH"
+export LD_LIBRARY_PATH="$DELPHES_DIR/lib:${LD_LIBRARY_PATH:-}"
