@@ -32,7 +32,7 @@ int main() {
   TH1F h_nparticles(
       "h_nparticles",
       "Final-state multiplicity;N particles;Events",
-      100, 0, 200);
+      100, 0, 500);
 
   TH1F h_pt(
       "h_pt",
@@ -52,7 +52,7 @@ int main() {
   TH1F h_bhadron_pt(
       "h_bhadron_pt",
       "B-hadron p_{T};p_{T} [GeV];Entries",
-      100, 0, 100);
+      100, 0, 200);
 
   // --------------------------------------------
   // Event loop
