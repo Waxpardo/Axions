@@ -17,3 +17,6 @@ export PYTHIA8DATA=$PYTHIA8_ROOT/share/Pythia8/xmldoc
 export LCG_VIEW=/cvmfs/sft.cern.ch/lcg/views/LCG_107/x86_64-el9-gcc14-opt
 
 echo "=== Environment Ready (GCC 14 / ROOT Active) ==="
+echo ""
+echo "To manually update your library path in another window, copy and paste this command:"
+echo "export LD_LIBRARY_PATH=\$LCG_VIEW/lib:\$LCG_VIEW/lib64:\$LD_LIBRARY_PATH"
