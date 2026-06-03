@@ -1,0 +1,11 @@
+import model /data/alice/egrivas/Axions/models/SM_alp_UFO/
+generate e+ e- > alp a
+output /data/alice/egrivas/Axions/belleII_alp/ -f
+launch /data/alice/egrivas/Axions/belleII_alp/ -f
+set ebeam1 5.290
+set ebeam2 5.290
+set Malp 3.000
+set Walp 0.100
+set decay 9999 1.000000e+00 2 13 -13
+0
+done
