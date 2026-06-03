@@ -44,11 +44,17 @@ export MG5ROOT=/data/alice/username/MadGraph5_aMC/MG5_aMC_v3_7_1
 source env/setup_nikhef_lcg.sh
 ```
 
-The script uses the supervisor-recommended LCG view:
+The script uses an LCG view that is internally compatible with the CVMFS Delphes
+package:
 
 ```text
-/cvmfs/sft.cern.ch/lcg/views/LCG_106_ATLAS_13/x86_64-el9-gcc13-opt
+/cvmfs/sft.cern.ch/lcg/views/LCG_108/x86_64-el9-gcc15-opt
 ```
+
+Earlier `LCG_106_ATLAS_13` checks worked for MG5, Pythia, HepMC, and ROOT, but
+the available Delphes packages on Nikhef failed against that ROOT with a missing
+`TF1::GradientPar` symbol. The default is therefore `LCG_108` for the full
+Delphes smoke test.
 
 It also sets:
 

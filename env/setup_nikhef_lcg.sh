@@ -8,7 +8,7 @@
 unset CC CXX FC
 unset LD_LIBRARY_PATH
 
-export LCG_VIEW="${LCG_VIEW:-/cvmfs/sft.cern.ch/lcg/views/LCG_106_ATLAS_13/x86_64-el9-gcc13-opt}"
+export LCG_VIEW="${LCG_VIEW:-/cvmfs/sft.cern.ch/lcg/views/LCG_108/x86_64-el9-gcc15-opt}"
 if [[ ! -f "${LCG_VIEW}/setup.sh" ]]; then
   echo "LCG view not found: ${LCG_VIEW}" >&2
   return 1 2>/dev/null || exit 1
@@ -30,9 +30,9 @@ if command -v pythia8-config >/dev/null 2>&1; then
   export PYTHIA8DATA="${PYTHIA8_ROOT}/share/Pythia8/xmldoc"
 fi
 
-# Delphes is not vendored in this repository. Use the CVMFS build matching the
-# LCG106/GCC13 stack unless the user explicitly points DELPHES_DIR elsewhere.
-export DELPHES_DIR="${DELPHES_DIR:-/cvmfs/sft.cern.ch/lcg/releases/delphes/3.5.1pre14-d549e/x86_64-el9-gcc13-opt}"
+# Delphes is not vendored in this repository. Prefer the Delphes package set by
+# the selected LCG view; if it is unset, fall back to the LCG108-compatible build.
+export DELPHES_DIR="${DELPHES_DIR:-/cvmfs/sft.cern.ch/lcg/releases/delphes/3.5.1pre12-ae61c/x86_64-el9-gcc15-opt}"
 if [[ -d "${DELPHES_DIR}" ]]; then
   export PATH="${DELPHES_DIR}/bin:${PATH}"
   export LD_LIBRARY_PATH="${DELPHES_DIR}/lib:${LD_LIBRARY_PATH:-}"
