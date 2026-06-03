@@ -12,7 +12,7 @@ Inputs:
   hepmc_out      HepMC2 ASCII output from Pythia. Default: events.hepmc.
   analysis_root  Simple ROOT histogram output. Default: analysis.root.
   delphes_root   Delphes ROOT output. Default: delphes.root.
-  delphes_card   Detector card. Default: $DELPHES_CARD_IDEA.
+  delphes_card   Detector card. Default: $DELPHES_CARD.
 
 Source ../../env/setup_nikhef_lcg.sh before running this script on Nikhef.
 EOF
@@ -23,12 +23,12 @@ if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
   exit 0
 fi
 
-lhe_path="${1:-bbbar_test/Events/run_01/unweighted_events.lhe.gz}"
+lhe_path="${1:-ee_mumu_test/Events/run_01/unweighted_events.lhe.gz}"
 n_events="${2:-1000}"
 hepmc_out="${3:-events.hepmc}"
 root_out="${4:-analysis.root}"
 delphes_out="${5:-delphes.root}"
-delphes_card="${6:-${DELPHES_CARD_IDEA:-}}"
+delphes_card="${6:-${DELPHES_CARD:-}}"
 
 if [[ ! -f "${lhe_path}" ]]; then
   echo "LHE input not found: ${lhe_path}" >&2
@@ -41,7 +41,7 @@ if [[ -z "${LCG_VIEW:-}" ]]; then
 fi
 
 if [[ -z "${delphes_card}" ]]; then
-  echo "No Delphes card set. Pass one explicitly or set DELPHES_CARD_IDEA." >&2
+  echo "No Delphes card set. Pass one explicitly or set DELPHES_CARD." >&2
   exit 1
 fi
 

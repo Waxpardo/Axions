@@ -12,6 +12,7 @@ pythia8*/
 pythia8313/
 PROC_*/
 bbbar_test/
+ee_mumu_test/
 belleII_alp/
 *.lhe
 *.lhe.gz

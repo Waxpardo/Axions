@@ -36,16 +36,31 @@ export DELPHES_DIR="${DELPHES_DIR:-/cvmfs/sft.cern.ch/lcg/releases/delphes/3.5.1
 if [[ -d "${DELPHES_DIR}" ]]; then
   export PATH="${DELPHES_DIR}/bin:${PATH}"
   export LD_LIBRARY_PATH="${DELPHES_DIR}/lib:${LD_LIBRARY_PATH:-}"
-  export DELPHES_CARD_IDEA="${DELPHES_CARD_IDEA:-${DELPHES_DIR}/cards/delphes_card_IDEA.tcl}"
+  if [[ -z "${DELPHES_CARD:-}" ]]; then
+    for card in \
+      "${DELPHES_DIR}/cards/validation_card.tcl" \
+      "${DELPHES_DIR}/cards/delphes_card_CircularEE.tcl" \
+      "${DELPHES_DIR}/cards/delphes_card_llptest.tcl" \
+      "${DELPHES_DIR}/cards/delphes_card_CMS.tcl"; do
+      if [[ -f "${card}" ]]; then
+        export DELPHES_CARD="${card}"
+        break
+      fi
+    done
+  fi
 else
   echo "Warning: DELPHES_DIR not found: ${DELPHES_DIR}" >&2
+fi
+
+if [[ -z "${DELPHES_CARD:-}" ]]; then
+  echo "Warning: DELPHES_CARD is unset. Pass a Delphes card explicitly to the smoke scripts." >&2
 fi
 
 echo "=== Nikhef MG5/Pythia/HepMC/Delphes Environment ==="
 echo "MG5ROOT=${MG5ROOT}"
 echo "LCG_VIEW=${LCG_VIEW}"
 echo "DELPHES_DIR=${DELPHES_DIR:-unset}"
-echo "DELPHES_CARD_IDEA=${DELPHES_CARD_IDEA:-unset}"
+echo "DELPHES_CARD=${DELPHES_CARD:-unset}"
 command -v g++ || true
 gcc --version | head -n 1
 g++ --version | head -n 1

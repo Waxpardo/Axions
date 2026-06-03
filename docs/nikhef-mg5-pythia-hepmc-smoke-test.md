@@ -10,13 +10,18 @@ MadGraph -> LHE -> Pythia -> HepMC -> ROOT histograms -> Delphes ROOT
 The test process is:
 
 ```text
-p p -> b b~
+e+ e- -> mu+ mu-
 ```
 
 This is only a software smoke test. It proves that the cluster environment,
 compiler, MadGraph, Pythia, HepMC, ROOT, and Delphes can talk to each other. It
 does not validate the ALP physics process; ALP validation is done later with the
 physics gates in `theory/predictions/validate.py`.
+
+The smoke test is deliberately generic. It does not hard-code Belle II,
+FCC-ee, or any analysis detector choice into the pipeline. The center-of-mass
+energy and Delphes detector card are inputs to the smoke script; the defaults
+are only convenient software-test values.
 
 ## 1. Prerequisites
 
@@ -151,7 +156,7 @@ LCG_VIEW
 PYTHIA8_ROOT
 PYTHIA8DATA
 DELPHES_DIR
-DELPHES_CARD_IDEA
+DELPHES_CARD
 ```
 
 ## 7. Verify The Tools
@@ -163,15 +168,19 @@ which mg5_aMC
 which pythia8-config
 which root-config
 which DelphesHepMC2
-echo "$DELPHES_CARD_IDEA"
+echo "$DELPHES_CARD"
 ```
 
-All four commands should print paths. `DELPHES_CARD_IDEA` should point to a real
-Delphes card, normally:
+The `which` commands should print paths. `DELPHES_CARD` should point to a real
+Delphes card. On the current Nikhef CVMFS setup the default is the generic
+Delphes validation card:
 
 ```text
-.../delphes_card_IDEA.tcl
+.../validation_card.tcl
 ```
+
+That default is only for the software smoke test. For ALP production, choose and
+pass the relevant detector card explicitly when the analysis point is chosen.
 
 ## 8. Run The Full Smoke Pipeline
 
@@ -179,29 +188,40 @@ From the repository root:
 
 ```bash
 cd mc/hepmc_smoke_test
-./run_mg5_to_delphes_smoke_test.sh work 100
+./run_mg5_to_delphes_smoke_test.sh work 100 10.0 "$DELPHES_CARD"
 ```
 
-The first argument is the work directory. The second argument is the number of
-events. Use `100` for a quick setup check and `1000` for a slightly stronger
-test.
+The arguments are:
+
+```text
+work              output directory
+100               number of events
+10.0              generic e+e- sqrt(s) in GeV
+"$DELPHES_CARD"   detector card to use for Delphes
+```
+
+Use `100` events for a quick setup check and `1000` for a slightly stronger
+test. The `10.0 GeV` value is not a Belle II setting; it is just a compact
+generic lepton-collider smoke-test energy.
 
 The script performs these steps:
 
 ```text
-1. Create a MadGraph process card for p p -> b b~
-2. Generate LHE events with MadGraph
-3. Run Pythia on the LHE file
-4. Write HepMC2 ASCII output
-5. Read the HepMC file with a small C++ checker
-6. Write simple ROOT histograms from the HepMC file
-7. Run DelphesHepMC2 with the IDEA detector card
+1. Create a MadGraph process card for e+ e- -> mu+ mu-
+2. Set a lepton-collider run card with lpp1 = lpp2 = 0
+3. Set ebeam1 = ebeam2 = sqrt(s)/2
+4. Generate LHE events with MadGraph
+5. Run Pythia on the LHE file
+6. Write HepMC2 ASCII output
+7. Read the HepMC file with a small C++ checker
+8. Write simple ROOT histograms from the HepMC file
+9. Run DelphesHepMC2 with the selected detector card
 ```
 
 Expected files:
 
 ```text
-mc/hepmc_smoke_test/work/bbbar_test/Events/run_01/unweighted_events.lhe.gz
+mc/hepmc_smoke_test/work/ee_mumu_test/Events/run_01/unweighted_events.lhe.gz
 mc/hepmc_smoke_test/work/events.hepmc
 mc/hepmc_smoke_test/work/analysis.root
 mc/hepmc_smoke_test/work/delphes.root
@@ -221,7 +241,7 @@ This mode checks that the expected pipeline files exist and are non-empty. If
 `uproot` is available, it also checks:
 
 ```text
-analysis.root contains h_nparticles, h_pt, h_eta, h_phi, h_bhadron_pt
+analysis.root contains h_nparticles, h_pt, h_eta, h_phi, h_charged_lepton_pt
 delphes.root contains the Delphes tree
 ```
 
@@ -254,7 +274,7 @@ h_nparticles
 h_pt
 h_eta
 h_phi
-h_bhadron_pt
+h_charged_lepton_pt
 ```
 
 `delphes.root` should contain:
@@ -273,7 +293,7 @@ Delphes does not like overwriting an existing ROOT output file. The cleanest way
 to rerun is to use a new work directory:
 
 ```bash
-./run_mg5_to_delphes_smoke_test.sh work_002 100
+./run_mg5_to_delphes_smoke_test.sh work_002 100 10.0 "$DELPHES_CARD"
 python3 ../../theory/predictions/validate.py work_002 --pipeline-smoke
 ```
 
@@ -288,7 +308,8 @@ cd mc/hepmc_smoke_test
   100 \
   events.hepmc \
   analysis.root \
-  delphes.root
+  delphes.root \
+  "$DELPHES_CARD"
 ```
 
 The helper script compiles and runs:
@@ -321,6 +342,16 @@ which pythia8-config
 which root-config
 which DelphesHepMC2
 ```
+
+If `DELPHES_CARD` is unset or points to a missing file:
+
+```bash
+echo "$DELPHES_CARD"
+ls "$DELPHES_CARD"
+```
+
+Either source `env/setup_nikhef_lcg.sh` again or pass a detector card explicitly
+as the fourth argument to `run_mg5_to_delphes_smoke_test.sh`.
 
 If C++ compilation cannot find HepMC:
 
@@ -355,8 +386,16 @@ pipeline failure if the LHE file is generated and the validation command passes.
 ## 14. What Comes Next
 
 After this smoke test passes, the software chain is usable. The next project
-step is to replace the tutorial `p p -> b b~` process with the ALP production
-cards, then run the ALP-specific validation gates:
+step is to replace the generic `e+ e- -> mu+ mu-` process with the ALP production
+cards:
+
+```text
+e+ e- -> a gamma
+a -> gamma gamma
+```
+
+At that point, choose the analysis-specific center-of-mass energy and detector
+card explicitly. Then run the ALP-specific validation gates:
 
 ```text
 Gate 1: production cross section

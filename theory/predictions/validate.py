@@ -361,7 +361,7 @@ def validate_pipeline_outputs(run_dir: Path, plots_dir: Path | None = None) -> d
         _root_file_check(
             "hepmc_analysis_root",
             find_analysis_root(run_dir),
-            ["h_nparticles", "h_pt", "h_eta", "h_phi", "h_bhadron_pt"],
+            ["h_nparticles", "h_pt", "h_eta", "h_phi", "h_charged_lepton_pt"],
         ),
         _root_file_check("delphes_root", find_delphes_root(run_dir), ["Delphes"]),
     ]

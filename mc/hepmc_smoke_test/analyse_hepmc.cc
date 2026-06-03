@@ -37,9 +37,9 @@ int main(int argc, char* argv[]) {
       "Final-state particle #phi;#phi;Entries",
       64, -3.2, 3.2);
 
-  TH1F h_bhadron_pt(
-      "h_bhadron_pt",
-      "B-hadron p_{T};p_{T} [GeV];Entries",
+  TH1F h_charged_lepton_pt(
+      "h_charged_lepton_pt",
+      "Charged-lepton p_{T};p_{T} [GeV];Entries",
       100, 0, 100);
 
   int iev = 0;
@@ -77,10 +77,10 @@ int main(int argc, char* argv[]) {
       h_phi.Fill(phi);
 
       const int apdg = std::abs(pdgid);
-      const bool is_b_hadron = (apdg / 1000 == 5) || (apdg / 100 == 5);
+      const bool is_charged_lepton = apdg == 11 || apdg == 13 || apdg == 15;
 
-      if (is_b_hadron) {
-        h_bhadron_pt.Fill(pt);
+      if (is_charged_lepton) {
+        h_charged_lepton_pt.Fill(pt);
       }
     }
 
@@ -99,4 +99,3 @@ int main(int argc, char* argv[]) {
   std::cout << "\nDone.\nWrote " << root_out << "\n";
   return 0;
 }
-

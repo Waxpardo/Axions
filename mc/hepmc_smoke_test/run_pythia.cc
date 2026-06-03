@@ -9,7 +9,7 @@ using namespace Pythia8;
 
 int main(int argc, char* argv[]) {
   const std::string lhe_path =
-      argc > 1 ? argv[1] : "bbbar_test/Events/run_01/unweighted_events.lhe.gz";
+      argc > 1 ? argv[1] : "ee_mumu_test/Events/run_01/unweighted_events.lhe.gz";
   const int n_events = argc > 2 ? std::atoi(argv[2]) : 10000;
   const std::string hepmc_out = argc > 3 ? argv[3] : "events.hepmc";
 
