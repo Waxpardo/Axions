@@ -21,7 +21,9 @@ if [[ -z "${MG5ROOT:-}" ]]; then
   export MG5ROOT="/data/alice/${USER}/MadGraph5_aMC/MG5_aMC_v3_7_1"
 fi
 
-export PATH="${MG5ROOT}/bin:/cvmfs/sft.cern.ch/lcg/releases/gcc/12.1.0/x86_64-el9/bin:${PATH}"
+# Keep the compiler from the LCG view. ROOT/Delphes in this view are built with
+# GCC13, so prepending an older GCC causes libstdc++ symbol mismatches.
+export PATH="${MG5ROOT}/bin:${PATH}"
 
 if command -v pythia8-config >/dev/null 2>&1; then
   export PYTHIA8_ROOT="$(pythia8-config --prefix)"

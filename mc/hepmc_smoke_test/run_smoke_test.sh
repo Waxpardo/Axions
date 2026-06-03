@@ -71,7 +71,7 @@ g++ read_hepmc.cc \
   -lHepMC \
   -o read_hepmc
 
-./read_hepmc "${hepmc_out}" 5
+./read_hepmc "${hepmc_out}" 5 25
 
 g++ analyse_hepmc.cc \
   -I"${LCG_VIEW}/include" \
