@@ -18,25 +18,9 @@ except ImportError as exc:  # Keep --pipeline-smoke usable on a fresh account.
 else:
     _NUMPY_IMPORT_ERROR = None
 
-try:
-    from predict_grid import (
-        ALPHA,
-        e_gamma_recoil,
-        ell_a,
-        gamma_a,
-        sigma_prod_pb,
-        delta_theta_min,
-    )
-except ImportError as exc:  # Keep --pipeline-smoke independent of ALP deps.
-    ALPHA = 1.0 / 137.035999084
-    e_gamma_recoil = None  # type: ignore
-    ell_a = None  # type: ignore
-    gamma_a = None  # type: ignore
-    sigma_prod_pb = None  # type: ignore
-    delta_theta_min = None  # type: ignore
-    _PREDICT_GRID_IMPORT_ERROR: ImportError | None = exc
-else:
-    _PREDICT_GRID_IMPORT_ERROR = None
+ALPHA = 1.0 / 137.035999084
+_PREDICTION_TOOLS: dict[str, Any] | None = None
+_PREDICT_GRID_IMPORT_ERROR: ImportError | None = None
 
 
 FLOAT_RE = r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?"
@@ -64,13 +48,41 @@ def _require_numpy():
     return np
 
 
-def _require_prediction_tool(name: str, tool: Any):
-    if tool is None:
+def _prediction_tools() -> dict[str, Any]:
+    global ALPHA, _PREDICTION_TOOLS, _PREDICT_GRID_IMPORT_ERROR
+    if _PREDICTION_TOOLS is not None:
+        return _PREDICTION_TOOLS
+
+    try:
+        from predict_grid import (
+            ALPHA as imported_alpha,
+            e_gamma_recoil,
+            ell_a,
+            gamma_a,
+            sigma_prod_pb,
+            delta_theta_min,
+        )
+    except ImportError as exc:
+        _PREDICT_GRID_IMPORT_ERROR = exc
         raise RuntimeError(
-            f"Could not import {name} from predict_grid.py. "
-            "Install the theory dependencies with: pip install -r env/requirements.txt"
-        ) from _PREDICT_GRID_IMPORT_ERROR
-    return tool
+            "Could not import predict_grid.py. Install the theory dependencies with: "
+            "pip install -r env/requirements.txt"
+        ) from exc
+
+    ALPHA = imported_alpha
+    _PREDICTION_TOOLS = {
+        "e_gamma_recoil": e_gamma_recoil,
+        "ell_a": ell_a,
+        "gamma_a": gamma_a,
+        "sigma_prod_pb": sigma_prod_pb,
+        "delta_theta_min": delta_theta_min,
+    }
+    return _PREDICTION_TOOLS
+
+
+def _require_prediction_tool(name: str):
+    tools = _prediction_tools()
+    return tools[name]
 
 
 def find_banner(run_dir: Path) -> Path | None:
@@ -222,7 +234,7 @@ def parse_param_card(param_card: Path, alp_pdg_id: int = 9999) -> dict[str, floa
 
 def gate1_cross_section(banner_path: Path, m_a: float, g_agg: float, sqrt_s: float, tol: float = 0.05) -> dict[str, Any]:
     mc_pb = parse_mg_cross_section(banner_path)
-    sigma_tool = _require_prediction_tool("sigma_prod_pb", sigma_prod_pb)
+    sigma_tool = _require_prediction_tool("sigma_prod_pb")
     theory_pb = float(sigma_tool(m_a, g_agg, sqrt_s))
     ratio = mc_pb / theory_pb if theory_pb else math.inf
     passed = abs(ratio - 1.0) < tol
@@ -237,7 +249,7 @@ def gate1_cross_section(banner_path: Path, m_a: float, g_agg: float, sqrt_s: flo
 
 
 def gate2_width(width_gev_from_mg: float, m_a: float, g_agg: float, tol: float = 0.05) -> dict[str, Any]:
-    gamma_tool = _require_prediction_tool("gamma_a", gamma_a)
+    gamma_tool = _require_prediction_tool("gamma_a")
     theory_width = float(gamma_tool(m_a, g_agg))
     ratio = width_gev_from_mg / theory_width if theory_width else math.inf
     if abs(ratio - 1.0) < tol:
@@ -385,7 +397,7 @@ def _select_recoil_photon(event: Any, expected_energy: float) -> Any | None:
 def validate_recoil_photon(lhe_path: Path, m_a: float, sqrt_s: float, plot_path: Path | None = None) -> dict[str, Any]:
     pylhe = _require_pylhe()
     npx = _require_numpy()
-    recoil_tool = _require_prediction_tool("e_gamma_recoil", e_gamma_recoil)
+    recoil_tool = _require_prediction_tool("e_gamma_recoil")
     expected = float(recoil_tool(m_a, sqrt_s))
     energies: list[float] = []
     for event in pylhe.read_lhe(str(lhe_path)):
@@ -423,7 +435,7 @@ def validate_recoil_photon(lhe_path: Path, m_a: float, sqrt_s: float, plot_path:
 def validate_angular(lhe_path: Path, m_a: float, sqrt_s: float, plot_path: Path | None = None) -> dict[str, Any]:
     pylhe = _require_pylhe()
     npx = _require_numpy()
-    recoil_tool = _require_prediction_tool("e_gamma_recoil", e_gamma_recoil)
+    recoil_tool = _require_prediction_tool("e_gamma_recoil")
     expected_energy = float(recoil_tool(m_a, sqrt_s))
     cos_theta: list[float] = []
     for event in pylhe.read_lhe(str(lhe_path)):
@@ -493,7 +505,7 @@ def validate_decay_length(
         raise ValueError(f"No ALP decay vertices with PDG {alp_pdg_id} found in {hepmc_path}")
 
     values = npx.asarray(distances)
-    ell_tool = _require_prediction_tool("ell_a", ell_a)
+    ell_tool = _require_prediction_tool("ell_a")
     theory = float(ell_tool(m_a, g_agg, sqrt_s))
     mc_mean = float(values.mean())
     rel_diff = abs(mc_mean - theory) / theory if theory else math.inf
@@ -529,7 +541,7 @@ def validate_opening_angle(
 ) -> dict[str, Any]:
     pyhepmc = _require_pyhepmc()
     npx = _require_numpy()
-    delta_theta_tool = _require_prediction_tool("delta_theta_min", delta_theta_min)
+    delta_theta_tool = _require_prediction_tool("delta_theta_min")
     opening_angles: list[float] = []
     with pyhepmc.open(str(hepmc_path)) as handle:
         for event in handle:
