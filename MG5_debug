@@ -40,7 +40,7 @@ define l+ = e+ mu+
 define l- = e- mu-
 define vl = ve vm vt
 define vl~ = ve~ vm~ vt~
-import model data/alice/egrivas/Axions/models/SM_alp_UFO
+import model models/SM_alp_UFO
 Traceback (most recent call last):
   File "/data/alice/pchrist/MadGraph5_aMC/MG5_aMC_v3_7_1/madgraph/interface/extended_cmd.py", line 1570, in onecmd
     return self.onecmd_orig(line, **opt)
@@ -59,9 +59,9 @@ Traceback (most recent call last):
   File "/data/alice/pchrist/MadGraph5_aMC/MG5_aMC_v3_7_1/models/import_ufo.py", line 204, in get_path_restrict
     model_path = find_ufo_path(model_name)
                  ^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/data/alice/pchrist/MadGraph5_aMC/MG5_aMC_v3_7_1/models/import_ufo.py", line 96, in find_ufo_path
+  File "/data/alice/pchrist/MadGraph5_aMC/MG5_aMC_v3_7_1/models/import_ufo.py", line 90, in find_ufo_path
     raise UFOImportError("Path %s is not a valid pathname" % model_name)
-models.import_ufo.UFOImportError: Path data/alice/egrivas/Axions/models/SM_alp_UFO is not a valid pathname
+models.import_ufo.UFOImportError: Path models/SM_alp_UFO is not a valid pathname
                           MadGraph5_aMC@NLO Options    
                           ----------------    
         complex_mass_scheme 	:	False

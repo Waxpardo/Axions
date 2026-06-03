@@ -12,7 +12,7 @@ int main() {
   pythia.readString("Beams:idB = 11");
   pythia.readString("Beams:eCM = 10.58");
   pythia.readString("Beams:frameType = 4");
-  pythia.readString("Beams:LHEF = /data/alice/egrivas/Axions/belleII_alp/Events/run_01/unweighted_events.lhe.gz");
+  pythia.readString("Beams:LHEF = /data/alice/egrivas/Axions/belleII_test10k/Events/run_04/unweighted_events.lhe.gz");
 
   // HepMC writer (correct Pythia interface wrapper)
   HepMC::Pythia8ToHepMC toHepMC;
