@@ -24,3 +24,4 @@ mc/hepmc_smoke_test/run_pythia
 mc/hepmc_smoke_test/read_hepmc
 mc/hepmc_smoke_test/analyse_hepmc
 mc/hepmc_smoke_test/work/
+mc/hepmc_smoke_test/work*/
