@@ -6,6 +6,10 @@ __pycache__/
 venv/
 MG5_aMC_v*/
 MadGraph5_aMC/
+Delphes-*/
+delphes-*/
+pythia8*/
+pythia8313/
 PROC_*/
 bbbar_test/
 belleII_alp/
@@ -19,3 +23,4 @@ belleII_alp/
 mc/hepmc_smoke_test/run_pythia
 mc/hepmc_smoke_test/read_hepmc
 mc/hepmc_smoke_test/analyse_hepmc
+mc/hepmc_smoke_test/work/

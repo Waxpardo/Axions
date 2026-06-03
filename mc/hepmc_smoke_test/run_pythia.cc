@@ -17,6 +17,10 @@ int main(int argc, char* argv[]) {
 
   pythia.readString("Beams:frameType = 4");
   pythia.readString("Beams:LHEF = " + lhe_path);
+  pythia.readString("Print:quiet = on");
+  pythia.readString("Next:numberShowInfo = 0");
+  pythia.readString("Next:numberShowProcess = 0");
+  pythia.readString("Next:numberShowEvent = 0");
 
   HepMC::Pythia8ToHepMC to_hepmc;
   HepMC::IO_GenEvent file(hepmc_out, std::ios::out);
@@ -36,4 +40,3 @@ int main(int argc, char* argv[]) {
   std::cout << "Wrote " << hepmc_out << std::endl;
   return 0;
 }
-

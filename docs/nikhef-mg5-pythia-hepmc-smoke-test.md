@@ -1,8 +1,8 @@
-# Nikhef MG5 -> Pythia -> HepMC Smoke Test
+# Nikhef MG5 -> Pythia -> HepMC -> Delphes Smoke Test
 
 This guide records the supervisor-provided test pipeline for checking that
-MadGraph, Pythia, HepMC, and ROOT work on Nikhef/Stoomboot before adapting the
-same chain to the ALP signal.
+MadGraph, Pythia, HepMC, ROOT, and Delphes work on Nikhef/Stoomboot before
+adapting the same chain to the ALP signal.
 
 The tutorial process is:
 
@@ -57,6 +57,8 @@ MG5ROOT
 LCG_VIEW
 PYTHIA8_ROOT
 PYTHIA8DATA
+DELPHES_DIR
+DELPHES_CARD_IDEA
 ```
 
 If `MG5ROOT` is not set before sourcing the script, it defaults to:
@@ -65,7 +67,30 @@ If `MG5ROOT` is not set before sourcing the script, it defaults to:
 /data/alice/$USER/MadGraph5_aMC/MG5_aMC_v3_7_1
 ```
 
-## 3. Run The MadGraph Tutorial Process
+## 3. One-Command Full Smoke Test
+
+From the repository root on Nikhef:
+
+```bash
+export MG5ROOT=/data/alice/username/MadGraph5_aMC/MG5_aMC_v3_7_1
+source env/setup_nikhef_lcg.sh
+cd mc/hepmc_smoke_test
+./run_mg5_to_delphes_smoke_test.sh work 1000
+```
+
+This creates the MadGraph process, generates LHE events, converts them through
+Pythia to HepMC, reads the HepMC file, writes a small ROOT histogram file, and
+runs Delphes with the CVMFS IDEA card.
+
+Expected outputs:
+
+```text
+mc/hepmc_smoke_test/work/events.hepmc
+mc/hepmc_smoke_test/work/analysis.root
+mc/hepmc_smoke_test/work/delphes.root
+```
+
+## 4. Manual MadGraph Tutorial Process
 
 Start MadGraph:
 
@@ -90,7 +115,7 @@ The expected LHE output path is:
 bbbar_test/Events/run_01/unweighted_events.lhe.gz
 ```
 
-## 4. Compile And Run The Pythia/HepMC/ROOT Test
+## 5. Manual Pythia/HepMC/ROOT/Delphes Test
 
 The C++ examples live in:
 
@@ -107,13 +132,13 @@ cd mc/hepmc_smoke_test
 If `bbbar_test` was generated in the repository root, run:
 
 ```bash
-./run_smoke_test.sh ../../bbbar_test/Events/run_01/unweighted_events.lhe.gz 10000 events.hepmc analysis.root
+./run_smoke_test.sh ../../bbbar_test/Events/run_01/unweighted_events.lhe.gz 1000 events.hepmc analysis.root delphes.root
 ```
 
 If `bbbar_test` was generated inside `mc/hepmc_smoke_test`, run:
 
 ```bash
-./run_smoke_test.sh bbbar_test/Events/run_01/unweighted_events.lhe.gz 10000 events.hepmc analysis.root
+./run_smoke_test.sh bbbar_test/Events/run_01/unweighted_events.lhe.gz 1000 events.hepmc analysis.root delphes.root
 ```
 
 The helper script does three things:
@@ -127,15 +152,18 @@ g++ read_hepmc.cc -I$LCG_VIEW/include -L$LCG_VIEW/lib -lHepMC -o read_hepmc
 
 g++ analyse_hepmc.cc -I$LCG_VIEW/include $(root-config --cflags --libs) -L$LCG_VIEW/lib -lHepMC -o analyse_hepmc
 ./analyse_hepmc <hepmc_out> <root_out>
+
+DelphesHepMC2 <delphes_card> <delphes_root> <hepmc_out>
 ```
 
-## 5. Expected Outputs
+## 6. Expected Outputs
 
 The smoke test should create:
 
 ```text
 events.hepmc
 analysis.root
+delphes.root
 ```
 
 `read_hepmc` prints final-state PDG IDs and transverse momenta. `analyse_hepmc`
@@ -149,7 +177,9 @@ h_phi
 h_bhadron_pt
 ```
 
-## 6. Common Issues
+The Delphes output should contain a `Delphes` tree.
+
+## 7. Common Issues
 
 If `mg5_aMC` is not found, check:
 
@@ -174,6 +204,14 @@ ls $LCG_VIEW/include/HepMC
 ls $LCG_VIEW/lib | grep HepMC
 ```
 
+If `DelphesHepMC2` or the IDEA card is not found, check:
+
+```bash
+echo $DELPHES_DIR
+echo $DELPHES_CARD_IDEA
+which DelphesHepMC2
+ls $DELPHES_CARD_IDEA
+```
+
 If Git starts warning about old libraries after loading ROOT or ALICE tools, use
 a clean shell and source only `env/setup_nikhef_lcg.sh` for this smoke test.
-
