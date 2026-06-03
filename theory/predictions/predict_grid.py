@@ -28,6 +28,8 @@ BELLE2_SQRT_S_GEV = 10.58
 FCCEE_Z_SQRT_S_GEV = 91.2
 BELLE2_L_MIN_M = 0.14
 BELLE2_L_MAX_M = 1.55
+FCCEE_L_MIN_M = BELLE2_L_MIN_M
+FCCEE_L_MAX_M = BELLE2_L_MAX_M
 
 
 def gamma_a(m_a: float | np.ndarray, g_agg: float | np.ndarray) -> float | np.ndarray:
@@ -116,16 +118,53 @@ def p_decay_in_detector(l_min_m: float, l_max_m: float, m_a: float, g_agg: float
     return p_survive(l_min_m, m_a, g_agg, sqrt_s) - p_survive(l_max_m, m_a, g_agg, sqrt_s)
 
 
+def detector_lengths_for_sqrt_s(
+    sqrt_s: float,
+    belle2_l_min_m: float = BELLE2_L_MIN_M,
+    belle2_l_max_m: float = BELLE2_L_MAX_M,
+    fccee_l_min_m: float = FCCEE_L_MIN_M,
+    fccee_l_max_m: float = FCCEE_L_MAX_M,
+    default_l_min_m: float = BELLE2_L_MIN_M,
+    default_l_max_m: float = BELLE2_L_MAX_M,
+) -> tuple[str, float, float]:
+    """Return detector label and lengths for a collider energy."""
+    if math.isclose(sqrt_s, BELLE2_SQRT_S_GEV, rel_tol=0.0, abs_tol=1e-6):
+        return "BelleII", belle2_l_min_m, belle2_l_max_m
+    if math.isclose(sqrt_s, FCCEE_Z_SQRT_S_GEV, rel_tol=0.0, abs_tol=1e-6):
+        return "FCCee_Z", fccee_l_min_m, fccee_l_max_m
+    return "custom", default_l_min_m, default_l_max_m
+
+
 def build_grid(
     m_a_grid: Iterable[float],
     g_grid: Iterable[float],
     sqrt_s_list: Iterable[float],
-    l_min_m: float = BELLE2_L_MIN_M,
-    l_max_m: float = BELLE2_L_MAX_M,
+    belle2_l_min_m: float = BELLE2_L_MIN_M,
+    belle2_l_max_m: float = BELLE2_L_MAX_M,
+    fccee_l_min_m: float = FCCEE_L_MIN_M,
+    fccee_l_max_m: float = FCCEE_L_MAX_M,
+    default_l_min_m: float = BELLE2_L_MIN_M,
+    default_l_max_m: float = BELLE2_L_MAX_M,
+    l_min_m: float | None = None,
+    l_max_m: float | None = None,
 ) -> pd.DataFrame:
     """Build the prediction grid as a pandas DataFrame"""
-    rows: list[dict[str, float]] = []
+    if l_min_m is not None:
+        belle2_l_min_m = fccee_l_min_m = default_l_min_m = l_min_m
+    if l_max_m is not None:
+        belle2_l_max_m = fccee_l_max_m = default_l_max_m = l_max_m
+
+    rows: list[dict[str, float | str]] = []
     for sqrt_s in sqrt_s_list:
+        detector, l_min_current_m, l_max_current_m = detector_lengths_for_sqrt_s(
+            sqrt_s,
+            belle2_l_min_m=belle2_l_min_m,
+            belle2_l_max_m=belle2_l_max_m,
+            fccee_l_min_m=fccee_l_min_m,
+            fccee_l_max_m=fccee_l_max_m,
+            default_l_min_m=default_l_min_m,
+            default_l_max_m=default_l_max_m,
+        )
         for m_a in m_a_grid:
             if m_a >= sqrt_s:
                 continue
@@ -137,6 +176,7 @@ def build_grid(
                         "m_a_GeV": float(m_a),
                         "g_agg_GeV_inv": float(g_agg),
                         "sqrt_s_GeV": float(sqrt_s),
+                        "detector": detector,
                         "sigma_pb": float(sigma_prod_pb(m_a, g_agg, sqrt_s)),
                         "sigma_GeV_neg2": float(sigma_prod(m_a, g_agg, sqrt_s)),
                         "E_a_GeV": float(e_alp(m_a, sqrt_s)),
@@ -149,10 +189,10 @@ def build_grid(
                         "ell_a_m": float(ell_a(m_a, g_agg, sqrt_s)),
                         "dtheta_min_rad": dtheta,
                         "dtheta_min_deg": float(np.degrees(dtheta)),
-                        "P_survive_Lmax": p_survive(l_max_m, m_a, g_agg, sqrt_s),
-                        "P_decay_det": p_decay_in_detector(l_min_m, l_max_m, m_a, g_agg, sqrt_s),
-                        "L_min_m": float(l_min_m),
-                        "L_max_m": float(l_max_m),
+                        "P_survive_Lmax": p_survive(l_max_current_m, m_a, g_agg, sqrt_s),
+                        "P_decay_det": p_decay_in_detector(l_min_current_m, l_max_current_m, m_a, g_agg, sqrt_s),
+                        "L_min_m": float(l_min_current_m),
+                        "L_max_m": float(l_max_current_m),
                     }
                 )
     return pd.DataFrame(rows)
@@ -184,13 +224,31 @@ def main() -> None:
     parser.add_argument("--g-min", type=float, default=1e-6)
     parser.add_argument("--g-max", type=float, default=1e-2)
     parser.add_argument("--n-g", type=int, default=50)
-    parser.add_argument("--l-min", type=float, default=BELLE2_L_MIN_M)
-    parser.add_argument("--l-max", type=float, default=BELLE2_L_MAX_M)
+    parser.add_argument("--belle2-l-min", type=float, default=BELLE2_L_MIN_M)
+    parser.add_argument("--belle2-l-max", type=float, default=BELLE2_L_MAX_M)
+    parser.add_argument("--fccee-l-min", type=float, default=FCCEE_L_MIN_M)
+    parser.add_argument("--fccee-l-max", type=float, default=FCCEE_L_MAX_M)
+    parser.add_argument("--default-l-min", type=float, default=BELLE2_L_MIN_M)
+    parser.add_argument("--default-l-max", type=float, default=BELLE2_L_MAX_M)
+    parser.add_argument("--l-min", type=float, default=None, help="Legacy override applied to every sqrt(s).")
+    parser.add_argument("--l-max", type=float, default=None, help="Legacy override applied to every sqrt(s).")
     args = parser.parse_args()
 
     masses = _log_grid(args.m_min, args.m_max, args.n_mass)
     couplings = _log_grid(args.g_min, args.g_max, args.n_g)
-    df = build_grid(masses, couplings, args.sqrt_s, args.l_min, args.l_max)
+    df = build_grid(
+        masses,
+        couplings,
+        args.sqrt_s,
+        belle2_l_min_m=args.belle2_l_min,
+        belle2_l_max_m=args.belle2_l_max,
+        fccee_l_min_m=args.fccee_l_min,
+        fccee_l_max_m=args.fccee_l_max,
+        default_l_min_m=args.default_l_min,
+        default_l_max_m=args.default_l_max,
+        l_min_m=args.l_min,
+        l_max_m=args.l_max,
+    )
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(args.out, index=False)
