@@ -5,7 +5,10 @@ __pycache__/
 .venv/
 venv/
 MG5_aMC_v*/
+MadGraph5_aMC/
 PROC_*/
+bbbar_test/
+belleII_alp/
 *.lhe
 *.lhe.gz
 *.hepmc
@@ -13,3 +16,6 @@ PROC_*/
 *.log
 *.out
 *.err
+mc/hepmc_smoke_test/run_pythia
+mc/hepmc_smoke_test/read_hepmc
+mc/hepmc_smoke_test/analyse_hepmc

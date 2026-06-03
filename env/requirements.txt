@@ -5,4 +5,5 @@ uproot
 awkward
 vector
 pandas
-
+pylhe
+pyhepmc

@@ -1,113 +1,202 @@
-"""Analytic predictions for photophilic ALP associated production."""
+"""Theory predictions for photophilic ALP validation.
+
+The formulas use the convention
+
+    L = (g_agg / 4) a F_{mu nu} Ftilde^{mu nu}
+
+with g_agg in GeV^-1. Outputs are designed to be consumed by both the
+MadGraph/Pythia validation scripts and the analysis limit-setting code.
+"""
 
 from __future__ import annotations
 
 import argparse
-import csv
 import math
 from pathlib import Path
+from typing import Iterable
+
+import numpy as np
+import pandas as pd
 
 
-ALPHA_EM = 1 / 137.035999084
-GEV2_TO_PB = 3.894e8
-HBARC_GEV_M = 1.973269804e-16
+ALPHA = 1 / 137.035999084
+HBAR_C_GEV_M = 1.97326980e-16
+HBAR_GEV_S = 6.582119569e-25
+GEV2_TO_PB = 3.8937937e8
+
+BELLE2_SQRT_S_GEV = 10.58
+FCCEE_Z_SQRT_S_GEV = 91.2
+BELLE2_L_MIN_M = 0.14
+BELLE2_L_MAX_M = 1.55
 
 
-def width_agg(g_agammagamma: float, m_a: float) -> float:
-    """Return Gamma(a -> gamma gamma) in GeV using the 64*pi convention."""
-    return g_agammagamma**2 * m_a**3 / (64 * math.pi)
+def gamma_a(m_a: float | np.ndarray, g_agg: float | np.ndarray) -> float | np.ndarray:
+    """Gamma(a -> gamma gamma) in GeV"""
+    return np.asarray(g_agg) ** 2 * np.asarray(m_a) ** 3 / (64.0 * math.pi)
 
 
-def sigma_associated_pb(g_agammagamma: float, m_a: float, sqrt_s: float) -> float:
-    """Return sigma(e+e- -> gamma a) in pb over the full angular range."""
-    s = sqrt_s**2
-    if m_a >= sqrt_s:
+def tau_a_seconds(m_a: float | np.ndarray, g_agg: float | np.ndarray) -> float | np.ndarray:
+    """Proper lifetime in seconds"""
+    return HBAR_GEV_S / gamma_a(m_a, g_agg)
+
+
+def c_tau_a(m_a: float | np.ndarray, g_agg: float | np.ndarray) -> float | np.ndarray:
+    """Proper decay length in meters"""
+    return HBAR_C_GEV_M / gamma_a(m_a, g_agg)
+
+
+def e_alp(m_a: float | np.ndarray, sqrt_s: float | np.ndarray) -> float | np.ndarray:
+    """ALP energy in the CM frame in GeV"""
+    return (np.asarray(sqrt_s) ** 2 + np.asarray(m_a) ** 2) / (2.0 * np.asarray(sqrt_s))
+
+
+def p_alp(m_a: float | np.ndarray, sqrt_s: float | np.ndarray) -> float | np.ndarray:
+    """ALP momentum magnitude in the CM frame in GeV"""
+    return (np.asarray(sqrt_s) ** 2 - np.asarray(m_a) ** 2) / (2.0 * np.asarray(sqrt_s))
+
+
+def e_gamma_recoil(m_a: float | np.ndarray, sqrt_s: float | np.ndarray) -> float | np.ndarray:
+    """Recoil photon energy in GeV"""
+    return p_alp(m_a, sqrt_s)
+
+
+def gamma_lorentz(m_a: float | np.ndarray, sqrt_s: float | np.ndarray) -> float | np.ndarray:
+    """ALP Lorentz boost factor"""
+    return e_alp(m_a, sqrt_s) / np.asarray(m_a)
+
+
+def ell_a(m_a: float | np.ndarray, g_agg: float | np.ndarray, sqrt_s: float | np.ndarray) -> float | np.ndarray:
+    """Boosted lab decay length in meters"""
+    return (p_alp(m_a, sqrt_s) / np.asarray(m_a)) * c_tau_a(m_a, g_agg)
+
+
+def delta_theta_min(m_a: float | np.ndarray, sqrt_s: float | np.ndarray) -> float | np.ndarray:
+    """Approximate minimum diphoton opening angle in radians"""
+    return 2.0 / gamma_lorentz(m_a, sqrt_s)
+
+
+def phase_space_factor(m_a: float | np.ndarray, sqrt_s: float | np.ndarray) -> float | np.ndarray:
+    """(1 - m_a^2 / s)^3, clipped to zero above threshold"""
+    m_arr = np.asarray(m_a)
+    s_arr = np.asarray(sqrt_s) ** 2
+    phase = (1.0 - m_arr**2 / s_arr) ** 3
+    return np.where(m_arr < np.asarray(sqrt_s), phase, 0.0)
+
+
+def dsigma_dcostheta(
+    m_a: float | np.ndarray,
+    g_agg: float | np.ndarray,
+    sqrt_s: float | np.ndarray,
+    cos_theta: float | np.ndarray,
+) -> float | np.ndarray:
+    """d sigma / d cos(theta_CM) in GeV^-2"""
+    return ALPHA * np.asarray(g_agg) ** 2 / 32.0 * (1.0 + np.asarray(cos_theta) ** 2) * phase_space_factor(m_a, sqrt_s)
+
+
+def sigma_prod(m_a: float | np.ndarray, g_agg: float | np.ndarray, sqrt_s: float | np.ndarray) -> float | np.ndarray:
+    """Total e+e- -> gamma a cross section in GeV^-2"""
+    return ALPHA * np.asarray(g_agg) ** 2 / 12.0 * phase_space_factor(m_a, sqrt_s)
+
+
+def sigma_prod_pb(m_a: float | np.ndarray, g_agg: float | np.ndarray, sqrt_s: float | np.ndarray) -> float | np.ndarray:
+    """Total e+e- -> gamma a cross section in pb."""
+    return sigma_prod(m_a, g_agg, sqrt_s) * GEV2_TO_PB
+
+
+def p_survive(length_m: float, m_a: float, g_agg: float, sqrt_s: float) -> float:
+    """Probability that the ALP reaches length_m before decaying"""
+    decay_length = float(ell_a(m_a, g_agg, sqrt_s))
+    if decay_length <= 0:
         return 0.0
-    sigma_gev2 = ALPHA_EM * g_agammagamma**2 / 12 * (1 - m_a**2 / s) ** 3
-    return sigma_gev2 * GEV2_TO_PB
+    return float(np.exp(-length_m / decay_length))
 
 
-def recoil_energy(m_a: float, sqrt_s: float) -> float:
-    """Return the mono-energetic recoil photon energy in GeV."""
-    return (sqrt_s**2 - m_a**2) / (2 * sqrt_s)
+def p_decay_in_detector(l_min_m: float, l_max_m: float, m_a: float, g_agg: float, sqrt_s: float) -> float:
+    """Probability to decay between l_min_m and l_max_m."""
+    return p_survive(l_min_m, m_a, g_agg, sqrt_s) - p_survive(l_max_m, m_a, g_agg, sqrt_s)
 
 
-def alp_momentum(m_a: float, sqrt_s: float) -> float:
-    """Return the ALP three-momentum magnitude in the CM frame in GeV."""
-    return recoil_energy(m_a, sqrt_s)
+def build_grid(
+    m_a_grid: Iterable[float],
+    g_grid: Iterable[float],
+    sqrt_s_list: Iterable[float],
+    l_min_m: float = BELLE2_L_MIN_M,
+    l_max_m: float = BELLE2_L_MAX_M,
+) -> pd.DataFrame:
+    """Build the prediction grid as a pandas DataFrame"""
+    rows: list[dict[str, float]] = []
+    for sqrt_s in sqrt_s_list:
+        for m_a in m_a_grid:
+            if m_a >= sqrt_s:
+                continue
+            for g_agg in g_grid:
+                width = float(gamma_a(m_a, g_agg))
+                dtheta = float(delta_theta_min(m_a, sqrt_s))
+                rows.append(
+                    {
+                        "m_a_GeV": float(m_a),
+                        "g_agg_GeV_inv": float(g_agg),
+                        "sqrt_s_GeV": float(sqrt_s),
+                        "sigma_pb": float(sigma_prod_pb(m_a, g_agg, sqrt_s)),
+                        "sigma_GeV_neg2": float(sigma_prod(m_a, g_agg, sqrt_s)),
+                        "E_a_GeV": float(e_alp(m_a, sqrt_s)),
+                        "p_a_GeV": float(p_alp(m_a, sqrt_s)),
+                        "E_gamma_recoil_GeV": float(e_gamma_recoil(m_a, sqrt_s)),
+                        "gamma_lorentz": float(gamma_lorentz(m_a, sqrt_s)),
+                        "Gamma_GeV": width,
+                        "tau_s": float(tau_a_seconds(m_a, g_agg)),
+                        "ctau_m": float(c_tau_a(m_a, g_agg)),
+                        "ell_a_m": float(ell_a(m_a, g_agg, sqrt_s)),
+                        "dtheta_min_rad": dtheta,
+                        "dtheta_min_deg": float(np.degrees(dtheta)),
+                        "P_survive_Lmax": p_survive(l_max_m, m_a, g_agg, sqrt_s),
+                        "P_decay_det": p_decay_in_detector(l_min_m, l_max_m, m_a, g_agg, sqrt_s),
+                        "L_min_m": float(l_min_m),
+                        "L_max_m": float(l_max_m),
+                    }
+                )
+    return pd.DataFrame(rows)
 
 
-def proper_decay_length_m(g_agammagamma: float, m_a: float) -> float:
-    """Return c*tau in meters."""
-    gamma = width_agg(g_agammagamma, m_a)
-    if gamma == 0:
-        return math.inf
-    return HBARC_GEV_M / gamma
+# Aliases
+width_agg = gamma_a
+recoil_energy = e_gamma_recoil
+alp_momentum = p_alp
+proper_decay_length_m = c_tau_a
+lab_decay_length_m = ell_a
+min_opening_angle_rad = delta_theta_min
+sigma_associated_pb = lambda g_agg, m_a, sqrt_s: sigma_prod_pb(m_a, g_agg, sqrt_s)
 
 
-def lab_decay_length_m(g_agammagamma: float, m_a: float, sqrt_s: float) -> float:
-    """Return boosted decay length in meters."""
-    if m_a == 0:
-        return math.inf
-    return alp_momentum(m_a, sqrt_s) / m_a * proper_decay_length_m(g_agammagamma, m_a)
-
-
-def min_opening_angle_rad(m_a: float, sqrt_s: float) -> float:
-    """Return the light-ALP estimate Delta theta_min ~= 4 m_a / sqrt(s)."""
-    return 4 * m_a / sqrt_s
-
-
-def log_grid(low: float, high: float, n: int) -> list[float]:
-    if n < 2:
-        return [low]
-    step = (math.log10(high) - math.log10(low)) / (n - 1)
-    return [10 ** (math.log10(low) + i * step) for i in range(n)]
-
-
-def write_grid(path: Path, sqrt_s: float, n_mass: int, g_ref: float) -> None:
-    masses = log_grid(1e-2, min(10.0, 0.999 * sqrt_s), n_mass)
-    with path.open("w", newline="") as handle:
-        writer = csv.DictWriter(
-            handle,
-            fieldnames=[
-                "m_a_gev",
-                "g_ref_gev_inv",
-                "sqrt_s_gev",
-                "sigma_pb",
-                "width_gev",
-                "ctau_m",
-                "ell_lab_m",
-                "e_recoil_gev",
-                "delta_theta_min_rad",
-            ],
-        )
-        writer.writeheader()
-        for m_a in masses:
-            writer.writerow(
-                {
-                    "m_a_gev": m_a,
-                    "g_ref_gev_inv": g_ref,
-                    "sqrt_s_gev": sqrt_s,
-                    "sigma_pb": sigma_associated_pb(g_ref, m_a, sqrt_s),
-                    "width_gev": width_agg(g_ref, m_a),
-                    "ctau_m": proper_decay_length_m(g_ref, m_a),
-                    "ell_lab_m": lab_decay_length_m(g_ref, m_a, sqrt_s),
-                    "e_recoil_gev": recoil_energy(m_a, sqrt_s),
-                    "delta_theta_min_rad": min_opening_angle_rad(m_a, sqrt_s),
-                }
-            )
+def _log_grid(low: float, high: float, n_points: int) -> np.ndarray:
+    if n_points < 2:
+        return np.array([low], dtype=float)
+    return np.logspace(math.log10(low), math.log10(high), n_points)
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--sqrt-s", type=float, required=True)
-    parser.add_argument("--out", type=Path, required=True)
+    parser = argparse.ArgumentParser(description="Build analytic ALP prediction grids.")
+    parser.add_argument("--out", type=Path, default=Path("theory/predictions/theory_grid.csv"))
+    parser.add_argument("--sqrt-s", type=float, nargs="+", default=[BELLE2_SQRT_S_GEV, FCCEE_Z_SQRT_S_GEV])
+    parser.add_argument("--m-min", type=float, default=1e-2)
+    parser.add_argument("--m-max", type=float, default=10.0)
     parser.add_argument("--n-mass", type=int, default=50)
-    parser.add_argument("--g-ref", type=float, default=1e-3)
+    parser.add_argument("--g-min", type=float, default=1e-6)
+    parser.add_argument("--g-max", type=float, default=1e-2)
+    parser.add_argument("--n-g", type=int, default=50)
+    parser.add_argument("--l-min", type=float, default=BELLE2_L_MIN_M)
+    parser.add_argument("--l-max", type=float, default=BELLE2_L_MAX_M)
     args = parser.parse_args()
-    write_grid(args.out, args.sqrt_s, args.n_mass, args.g_ref)
+
+    masses = _log_grid(args.m_min, args.m_max, args.n_mass)
+    couplings = _log_grid(args.g_min, args.g_max, args.n_g)
+    df = build_grid(masses, couplings, args.sqrt_s, args.l_min, args.l_max)
+
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(args.out, index=False)
+    print(f"Generated {len(df)} grid points -> {args.out}")
+    print(df.head().to_string(index=False))
 
 
 if __name__ == "__main__":
     main()
-
