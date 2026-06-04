@@ -1,0 +1,32 @@
+! pythia8_mumu.cmnd
+! ----------------------------------------------------------------------------
+! Pythia8 steering for Stage 2 of the e+ e- -> mu+ mu- validation.
+! Reads the parton-level LHE produced by MadGraph (Stage 1), applies the QED
+! parton shower (final-state radiation off the muons, initial-state radiation
+! off the e+e- beams), and -- via shower_lhe.cc -- writes HepMC2 for Delphes.
+!
+! Run through the driver:  bash mc/shower_validation_mumu.sh
+! (or directly:  mc/pythia/shower_lhe <this file> <out>.hepmc , from repo root)
+! ----------------------------------------------------------------------------
+
+! --- Input: take hard events from the Stage-1 Les Houches Event file ---
+Beams:frameType = 4                  ! 4 = read kinematics/process from an LHEF
+! Path is relative to the repo root (the directory the driver cd's into).
+! Pythia was built --with-gzip, so the .gz file is read directly.
+Beams:LHEF      = PROC_validation_mumu/Events/run_01/unweighted_events.lhe.gz
+
+! --- Statistics ---
+Main:numberOfEvents   = 10000        ! cap; the LHE only holds 10k anyway
+Main:numberOfSubruns  = 1            ! single LHE file -> single subrun
+Main:subrun           = 0
+Main:timesAllowErrors = 10           ! abort run only after many failures
+
+! --- Shower / underlying event ---
+! Keep FSR and ISR on (Pythia defaults) so QED radiation is modelled.
+! No multiparton interactions or beam remnants in a clean e+e- collision.
+PartonLevel:MPI = off
+
+! --- Robustness ---
+! LHE beam energies can differ slightly from Pythia's bookkeeping; loosen the
+! energy-momentum conservation tolerance so valid events are not rejected.
+Check:epTolErr = 2e-2

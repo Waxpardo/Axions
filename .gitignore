@@ -13,3 +13,10 @@ PROC_*/
 *.log
 *.out
 *.err
+
+# Compiled standalone Pythia8 shower driver (built locally; see mc/pythia/)
+mc/pythia/shower_lhe
+*.o
+
+# Generated analysis plots (runtime outputs; not committed)
+plots/

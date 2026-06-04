@@ -1,0 +1,56 @@
+# ============================================================================
+# MadGraph5_aMC@NLO driver script  --  e+ e- -> mu+ mu-  validation (Stage 1)
+# ============================================================================
+#
+# Purpose (physics): the simplest electroweak 2 -> 2 process at a lepton
+# collider. Its tree-level cross-section is analytically known, so it is the
+# ideal "known answer" to confirm the generator and our beam/run settings are
+# correct before we trust any ALP signal numbers.
+#
+# Purpose (software): exercises the MG5 generate/output/launch chain in fully
+# non-interactive (batch) mode, the same entrypoint every later stage builds on.
+#
+# Run with:  mg5_aMC mc/cards/validation_mumu/mg5_mumu.dat
+# (Do NOT run automatically -- execute on NIKHEF after review. See README.md.)
+#
+# Validation gate: reported cross-section should be ~0.8-0.9 nb at sqrt(s)=10.58 GeV
+# (pure-QED tree value 4*pi*alpha^2/(3s) ~ 0.87 nb, plus small gamma/Z interference).
+# ----------------------------------------------------------------------------
+
+# Built-in Standard Model -- no UFO needed for a pure-SM final state.
+import model sm
+
+# The process under test.
+generate e+ e- > mu+ mu-
+
+# Write the standalone process directory (git-ignored via PROC_*/).
+output PROC_validation_mumu
+
+# Generate events. Stage 1 = parton-level LHE only.
+# NOTE: Pythia8/Delphes are "Not Avail." as MG5 modules in this LCG build, so the
+# first launch prompt (program switches) just needs 'done' -- there is no shower
+# to turn OFF. Showering/detector are handled standalone in later stages.
+launch PROC_validation_mumu
+  done
+  # --- Beam configuration: Belle II energy, symmetric beams ---
+  # lpp=0 -> no PDF (monochromatic lepton beams), the correct setting for e+e-.
+  set lpp1 0
+  set lpp2 0
+  # Symmetric 5.29 GeV beams give sqrt(s) = 10.58 GeV. Total cross-section
+  # depends only on s, so symmetric beams are equivalent to Belle II's 7x4 GeV.
+  set ebeam1 5.29
+  set ebeam2 5.29
+  # --- Cuts ---
+  # The run_card defaults are tuned for the LHC: ptl = 10 GeV. At sqrt(s)=10.58
+  # GeV each muon carries only ~5.29 GeV, so the default cut removes EVERY event
+  # and the survey returns zero cross-section. For this total-cross-section
+  # validation we want the full phase space, so disable the lepton cuts.
+  set ptl 0
+  set etal -1
+  set drll 0
+  set mmll 0
+  # Small, inexpensive validation sample (do not increase without justification).
+  set nevents 10000
+  # No PDF systematics at a fixed-energy lepton collider; skip the reweighting.
+  set use_syst False
+  done
