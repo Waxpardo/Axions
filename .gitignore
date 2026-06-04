@@ -20,3 +20,7 @@ mc/pythia/shower_lhe
 
 # Generated analysis plots (runtime outputs; not committed)
 plots/
+
+# MadGraph PLY parser table cache (auto-generated at run time)
+py.py
+parser.out
