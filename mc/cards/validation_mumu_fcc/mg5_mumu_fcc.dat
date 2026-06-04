@@ -1,0 +1,36 @@
+# ============================================================================
+# MadGraph5_aMC@NLO driver script  --  e+ e- -> mu+ mu-  FCC-ee validation (Stage 1)
+# ============================================================================
+# Purpose (physics): same known-answer process as the Belle II validation but at
+# FCC-ee Higgs-factory energy (sqrt(s)=240 GeV). Tree-level cross-section scales
+# as 1/s: sigma ~ sigma(10.58 GeV) * (10.58/240)^2 ~ 0.87 nb * 1.94e-3 ~ 1.7 pb.
+# Purpose (software): confirms the MG5 beam/run settings for the FCC namespace
+# before trusting the Delphes IDEA card and downstream analysis.
+# Run with:  mg5_aMC mc/cards/validation_mumu_fcc/mg5_mumu_fcc.dat
+# (Do NOT run automatically -- execute on NIKHEF after review.)
+# Validation gate: reported cross-section should be ~1.7 pb at sqrt(s)=240 GeV
+# (pure-QED tree value 4*pi*alpha^2/(3s); Z-pole effects negligible at 240 GeV).
+# ----------------------------------------------------------------------------
+import model sm
+generate e+ e- > mu+ mu-
+output PROC_validation_mumu_fcc
+launch PROC_validation_mumu_fcc
+  done
+  # --- Beam configuration: FCC-ee Higgs-factory energy, symmetric beams ---
+  # lpp=0 -> no PDF (monochromatic lepton beams).
+  set lpp1 0
+  set lpp2 0
+  # Symmetric 120 GeV beams give sqrt(s) = 240 GeV (FCC-ee ZH threshold / Higgs factory).
+  set ebeam1 120
+  set ebeam2 120
+  # --- Cuts ---
+  # At sqrt(s)=240 GeV the default LHC ptl=10 GeV cut is no longer the problem it
+  # was at Belle II, but we keep it open for a total-cross-section validation.
+  set ptl 0
+  set etal -1
+  set drll 0
+  set mmll 0
+  # Small, inexpensive validation sample (do not increase without justification).
+  set nevents 10000
+  set use_syst False
+  done
