@@ -58,6 +58,7 @@ for exe in g++ pythia8-config root-config DelphesHepMC2; do
 done
 
 g++ run_pythia.cc \
+  -I"${LCG_VIEW}/include" \
   $(pythia8-config --cflags --libs) \
   -L"${LCG_VIEW}/lib" \
   -lHepMC \
