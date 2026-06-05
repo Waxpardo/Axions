@@ -1,0 +1,84 @@
+# ============================================================================
+# MadGraph5_aMC@NLO driver script -- SM inclusive FCC-ee background (Stage 1)
+# ============================================================================
+#
+# Purpose (physics): generates a representative mixture of Standard Model
+# processes at sqrt(s) = 240 GeV (FCC-ee Higgs-factory energy). Events are
+# drawn proportionally to cross sections so the resulting LHE represents a
+# realistic FCC-ee collision mixture. Dominant processes by cross section:
+#   W+W-  ~15 pb  |  jj ~6 pb  |  mu+mu-/ta+ta- ~1.7 pb each
+#   bb~   ~1 pb   |  ZZ ~1 pb  |  vl vl~ ~1.5 pb  |  ZH ~0.22 pb
+# Expected total: ~27 pb. At 5000 events, equivalent luminosity ~185 fb-1.
+# FCC-ee design luminosity at 240 GeV: 5 ab-1.
+#
+# Purpose (software): first multi-process MG5 run in this repo; exercises the
+# add-process syntax and produces a single LHE containing all SM object types
+# (jets, b-jets, leptons, neutrinos, W/Z/H) for Pythia8+Delphes validation.
+#
+# Omitted from this run:
+#   e+e- -> e+e- (Bhabha): O(100 pb) but >99% is forward-scattered below
+#     detector acceptance; would swamp the sample. Add later with angular cut.
+#   e+e- -> z a  (Z+gamma): validated separately as ALP background channel.
+#
+# Run with:  bash mc/gen_background_sm_fcc.sh
+# (Do NOT run automatically -- execute on NIKHEF after review.)
+# ============================================================================
+
+import model sm
+
+# -----------------------------------------------------------------------
+# Multiparticle labels (MG5 sm defaults):
+#   j   = g u d s c u~ d~ s~ c~  (light jets; e+e->gg has no LO diagram)
+#   vl  = ve vm vt                (all three light neutrino flavours)
+#   vl~ = ve~ vm~ vt~
+# -----------------------------------------------------------------------
+
+# Light quark pairs (u, d, s, c) -- dominant hadronic background
+generate e+ e- > j j
+
+# Bottom quarks -- separate entry for b-tagging and ZH->bb studies
+add process e+ e- > b b~
+
+# Muon pairs -- previously validated; cross-check in merged sample
+add process e+ e- > mu+ mu-
+
+# Tau pairs -- tau -> hadrons adds realistic low-multiplicity hadronic activity
+add process e+ e- > ta+ ta-
+
+# Neutrino pairs (all three flavours) -- purely invisible; exercises MissingET
+add process e+ e- > vl vl~
+
+# W pair production -- largest single contribution at 240 GeV; W->lv and W->qq'
+add process e+ e- > w+ w-
+
+# Z pair production -- ZZ->4l, 2l2nu, 4q
+add process e+ e- > z z
+
+# Higgsstrahlung -- flagship FCC-ee process; H decays handled by Pythia8
+add process e+ e- > z h
+
+output PROC_background_sm_fcc
+
+launch PROC_background_sm_fcc
+  done
+  # --- Beam: FCC-ee Higgs-factory, symmetric monochromatic lepton beams ---
+  # lpp=0 -> no PDF (monochromatic e+e- beams, not protons).
+  set lpp1 0
+  set lpp2 0
+  # Symmetric 120 GeV beams give sqrt(s) = 240 GeV.
+  set ebeam1 120
+  set ebeam2 120
+  # --- Open phase space (default run_card cuts are LHC-tuned; disable them) ---
+  set ptj  0
+  set ptb  0
+  set ptl  0
+  set etal -1
+  set drll 0
+  set drjl 0
+  set mmll 0
+  # --- Test sample ---
+  set nevents 5000
+  # --- Reproducibility: fix random seed for this validation run ---
+  set iseed 12345
+  set use_syst False
+  done

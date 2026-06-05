@@ -26,6 +26,7 @@ mc/delphes/.extract_tmp/
 
 # Generated analysis plots (runtime outputs; not committed)
 plots/
+analysis/**/plots/
 
 # MadGraph PLY parser table cache (auto-generated at run time)
 py.py

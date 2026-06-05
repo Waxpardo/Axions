@@ -1,0 +1,42 @@
+! pythia8_sm_fcc.cmnd
+! ----------------------------------------------------------------------------
+! Pythia8 steering for Stage-2 FCC-ee SM inclusive background.
+! Reads the multi-process parton-level LHE from Stage 1 (MadGraph), applies
+! the parton shower, decays all unstable particles, hadronizes final states,
+! and writes HepMC2 for Delphes.
+!
+! Decay handling (all via Pythia8 internal tables, SM branching ratios):
+!   W+/-  -> l nu (all flavours), q q' (all CKM-allowed)
+!   Z     -> l+l-, nu nu~, q q~ (all flavours)
+!   H(125)-> bb~ (58%), WW* (21%), gg (8%), ta+ta- (6%), cc~ (3%), ZZ* (3%), ...
+!   tau   -> pi nu, mu nu nu, e nu nu, multi-hadron modes
+! W, Z, H enter the LHE as undecayed status-2 intermediates; Pythia reads their
+! PDG codes and decays them before showering the decay products.
+!
+! ISR/FSR: on (Pythia defaults). At sqrt(s)=240 GeV, ISR shifts the effective
+! CM energy by O(alpha/pi) per emission; FSR produces soft QED radiation off
+! charged final-state particles. Both are physical and are kept.
+! MPI: off per project convention (e+e- has no underlying event).
+! Hadronization: on (default; explicit here for clarity).
+!
+! Run through the driver:  bash mc/shower_background_sm_fcc.sh
+! ----------------------------------------------------------------------------
+
+! --- Input: multi-process LHE from Stage 1 ---
+Beams:frameType = 4
+Beams:LHEF      = PROC_background_sm_fcc/Events/run_01/unweighted_events.lhe.gz
+
+! --- Statistics ---
+Main:numberOfEvents   = 5000
+Main:numberOfSubruns  = 1
+Main:subrun           = 0
+Main:timesAllowErrors = 10
+
+! --- Shower, decays, hadronization ---
+! HadronLevel:Hadronize is the Pythia8 default (on); stated explicitly so the
+! difference from the mumu/ALP cards (where hadronization is irrelevant) is clear.
+HadronLevel:Hadronize = on
+PartonLevel:MPI       = off
+
+! --- Robustness ---
+Check:epTolErr = 2e-2
