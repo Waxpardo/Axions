@@ -51,23 +51,30 @@ else
     echo "✗ LHAPDF not found in PATH"
 fi
 
-# Delphes
-if command -v DelphesHepMC &> /dev/null; then
-    DELPHES_PATH=$(which DelphesHepMC)
-    echo "✓ Delphes path: $DELPHES_PATH"
-elif [ -n "${DELPHES_DIR:-}" ] && [ -d "$DELPHES_DIR" ]; then
-    echo "✓ DELPHES_DIR set: $DELPHES_DIR"
+# Delphes: locally built against the active ROOT (see mc/delphes/build_delphes.sh).
+# Built locally to match ROOT 6.30 -- the CVMFS Delphes 3.5.0 was compiled against
+# ROOT 6.26 and crashes (exit 139) in the ROOT TFile finalizer. Upstream `make`
+# puts the executables and libDelphes.so in the source root, so DELPHES_DIR points
+# there (the bin/ and lib/ entries below are harmless robustness for either layout).
+export DELPHES_DIR="$AXIONS_ROOT/mc/delphes/Delphes-3.5.0"
+export PATH="$DELPHES_DIR:$DELPHES_DIR/bin:$PATH"
+export LD_LIBRARY_PATH="$DELPHES_DIR:$DELPHES_DIR/lib:${LD_LIBRARY_PATH:-}"
+
+# Delphes diagnostic (the pipeline uses DelphesHepMC2, not the legacy DelphesHepMC).
+# NOTE: the LCG_105 view itself ships a DelphesHepMC2 (delphes 3.5.1pre09, built
+# against ROOT 6.30), so 'command -v DelphesHepMC2' always succeeds. We therefore
+# probe the LOCAL pinned 3.5.0 build explicitly and warn on fallback, so we never
+# silently revert to the view's pre-release binary.
+if [ -x "$DELPHES_DIR/DelphesHepMC2" ]; then
+    echo "✓ Delphes (local 3.5.0, ROOT-matched): $DELPHES_DIR/DelphesHepMC2"
+elif command -v DelphesHepMC2 &> /dev/null; then
+    echo "⚠ Local Delphes not built -- falling back to $(which DelphesHepMC2)"
+    echo "  Run 'bash mc/delphes/build_delphes.sh' for the pinned ROOT-6.30 build."
 else
-    echo "✗ Delphes not available in PATH"
+    echo "✗ Delphes not built -- run: bash mc/delphes/build_delphes.sh"
 fi
 
 echo ""
 echo "======================================"
 echo "Setup complete!"
 echo "======================================"
-
-# Delphes 3.5.0 from CVMFS.
-# AlmaLinux 9 is RHEL-compatible, so use the CentOS 9 GCC11 build.
-export DELPHES_DIR=/cvmfs/sft.cern.ch/lcg/releases/delphes/3.5.0-05f0f/x86_64-centos9-gcc11-opt
-export PATH="$DELPHES_DIR/bin:$PATH"
-export LD_LIBRARY_PATH="$DELPHES_DIR/lib:${LD_LIBRARY_PATH:-}"

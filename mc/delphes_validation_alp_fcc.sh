@@ -1,24 +1,23 @@
 #!/usr/bin/env bash
 # ============================================================================
-# Stage-3 FCC-ee validation:  Delphes IDEA detector simulation of e+ e- -> mu+ mu-
+# Stage-3 FCC-ee ALP validation:  Delphes IDEA detector simulation
 # ============================================================================
 #
-# Purpose (physics): applies the FCC-ee IDEA parametric detector response to the
-# showered HepMC (Stage 2) and writes a flat ROOT tree of reconstructed objects.
-# At sqrt(s)=240 GeV muons carry ~120 GeV; pT peaks in the 40-80 GeV range within
-# the IDEA acceptance (|eta|<3.0). Validation = Delphes runs and reconstructs ~2
-# muons per event with plausible pT.
-# Purpose (software): exercises the same DelphesHepMC2 entrypoint used in the
-# Belle II validation, now with the IDEA minimal card. The muon_pt plot is the
-# deliverable -- not a physics result.
+# Purpose (physics): applies the FCC-ee IDEA parametric detector response to
+# the showered 3-photon HepMC (Stage 2). Validation = Delphes runs and
+# reconstructs photons with plausible multiplicity (~3/event).
+# Purpose (software): reuses the IDEA minimal card from the FCC-ee mumu
+# validation (jet finders already removed to avoid FastJetFinder segfault).
+# For the 3-photon ALP final state, only the ECAL/photon modules are needed;
+# the minimal card is appropriate.
 #
 # Fix: DelphesHepMC2 is built locally against ROOT 6.30 (mc/delphes/build_delphes.sh)
 # to match the LCG_105 runtime. A clean exit 0 is expected.
 #
 # Usage (run on NIKHEF after review -- not executed automatically):
-#   bash mc/delphes_validation_mumu_fcc.sh
+#   bash mc/delphes_validation_alp_fcc.sh
 # Optional first arg: max events for a tiny-sample test, e.g.:
-#   bash mc/delphes_validation_mumu_fcc.sh 100
+#   bash mc/delphes_validation_alp_fcc.sh 100
 # ----------------------------------------------------------------------------
 set -euo pipefail
 
@@ -28,12 +27,11 @@ cd "$REPO_ROOT"
 
 NEVENTS="${1:-}"
 
-# Minimal IDEA card: jet/b-tag/tau-tag modules removed from ExecutionPath.
-# See mc/delphes_cards/fcc_idea/card_IDEA_winter2023_mumu_minimal.tcl.
+# Reuse the mumu minimal IDEA card -- jet finders removed, photon modules kept.
 CARD="mc/delphes_cards/fcc_idea/card_IDEA_winter2023_mumu_minimal.tcl"
-IN="PROC_validation_mumu_fcc/Events/run_01/showered_mumu_fcc.hepmc"
-OUT="PROC_validation_mumu_fcc/Events/run_01/delphes_mumu_fcc.root"
-CHECK="mc/delphes_validation_check.C"
+IN="PROC_validation_alp_fcc/Events/run_01/showered_alp_fcc.hepmc"
+OUT="PROC_validation_alp_fcc/Events/run_01/delphes_alp_fcc.root"
+CHECK="mc/delphes_alp_photon_check.C"
 
 echo ">>> Sourcing environment (env/setup_lcg105.sh)"
 set +u
@@ -48,13 +46,13 @@ fi
 
 if [[ ! -f "$IN" ]]; then
   echo "ERROR: Stage-2 HepMC not found: $IN" >&2
-  echo "       Run 'bash mc/shower_validation_mumu_fcc.sh' first." >&2
+  echo "       Run 'bash mc/shower_validation_alp_fcc.sh' first." >&2
   exit 1
 fi
 
 RUNIN="$IN"
 if [[ -n "$NEVENTS" ]]; then
-  SMALL="PROC_validation_mumu_fcc/Events/run_01/showered_mumu_fcc_small.hepmc"
+  SMALL="PROC_validation_alp_fcc/Events/run_01/showered_alp_fcc_small.hepmc"
   echo ">>> Tiny-sample test: first $NEVENTS events -> $SMALL"
   awk -v n="$NEVENTS" '/^E /{e++} e>n{exit} {print}' "$IN" > "$SMALL"
   RUNIN="$SMALL"
@@ -77,8 +75,8 @@ if [[ "$DELPHES_EXIT" -ne 0 ]]; then
   exit 1
 fi
 
-echo ">>> Checking reconstructed muons"
+echo ">>> Checking reconstructed photons"
 root -l -b -q "${CHECK}(\"${OUT}\")"
 
 echo
-echo "Stage-3 FCC-ee status: CLEAN PASS"
+echo "Stage-3 FCC-ee ALP status: CLEAN PASS"

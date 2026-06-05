@@ -34,6 +34,8 @@ and Belle II contour validation gates pass.
 │   │   ├── belle2/              # Belle II MG5/Pythia cards
 │   │   └── fccee/               # FCC-ee MG5/Pythia cards
 │   ├── delphes_cards/           # Detector cards
+│   ├── delphes/                 # Local Delphes build (fetched + built; build_delphes.sh)
+│   ├── pythia/                  # Standalone Pythia8 shower driver (built locally)
 │   ├── gen_signal.sh            # Signal generation entrypoint
 │   ├── gen_background.sh        # Background generation entrypoint
 │   └── make_param_card.py       # Per-point param-card writer

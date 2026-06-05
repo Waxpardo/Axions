@@ -18,6 +18,12 @@ PROC_*/
 mc/pythia/shower_lhe
 *.o
 
+# Locally fetched + built Delphes (source tree + binaries; see mc/delphes/build_delphes.sh)
+mc/delphes/Delphes-3.5.0/
+mc/delphes/Delphes-*.tar.gz
+mc/delphes/.delphes_build_stamp
+mc/delphes/.extract_tmp/
+
 # Generated analysis plots (runtime outputs; not committed)
 plots/
 
