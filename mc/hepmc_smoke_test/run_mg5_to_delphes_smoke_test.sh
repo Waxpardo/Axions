@@ -13,7 +13,7 @@ Runs a non-ALP software smoke test:
   DelphesHepMC2 -> Delphes ROOT
 
 The center-of-mass energy and detector card are configurable. The default
-sqrt(s) is a generic 10 GeV software-test value, not a Belle II or FCC-ee
+sqrt(s) is a generic 100 GeV software-test value, not a Belle II or FCC-ee
 analysis setting.
 
 Source ../../env/setup_nikhef_lcg.sh before running this script on Nikhef.
@@ -28,7 +28,7 @@ fi
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 work_dir="${1:-${script_dir}/work}"
 n_events="${2:-1000}"
-sqrt_s_gev="${3:-${SMOKE_SQRT_S_GEV:-10.0}}"
+sqrt_s_gev="${3:-${SMOKE_SQRT_S_GEV:-100.0}}"
 delphes_card="${4:-${DELPHES_CARD:-}}"
 process_dir="${work_dir}/ee_mumu_test"
 proc_card="${work_dir}/proc_card_smoke_test.dat"
@@ -70,6 +70,14 @@ optional_updates = {
     "pdlabel": "none",
     "pdlabel1": "none",
     "pdlabel2": "none",
+    "dsqrt_shat": "0.0",
+    "ptl": "0.0",
+    "ptl1min": "0.0",
+    "ptl2min": "0.0",
+    "etal": "-1.0",
+    "etalmin": "0.0",
+    "drll": "0.0",
+    "mmll": "0.0",
     "use_syst": "False",
 }
 updates = {**required_updates, **optional_updates}

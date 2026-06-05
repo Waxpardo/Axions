@@ -188,7 +188,7 @@ From the repository root:
 
 ```bash
 cd mc/hepmc_smoke_test
-./run_mg5_to_delphes_smoke_test.sh work 100 10.0 "$DELPHES_CARD"
+./run_mg5_to_delphes_smoke_test.sh work 100 100.0 "$DELPHES_CARD"
 ```
 
 The arguments are:
@@ -196,13 +196,14 @@ The arguments are:
 ```text
 work              output directory
 100               number of events
-10.0              generic e+e- sqrt(s) in GeV
+100.0             generic e+e- sqrt(s) in GeV
 "$DELPHES_CARD"   detector card to use for Delphes
 ```
 
 Use `100` events for a quick setup check and `1000` for a slightly stronger
-test. The `10.0 GeV` value is not a Belle II setting; it is just a compact
-generic lepton-collider smoke-test energy.
+test. The `100.0 GeV` value is not a Belle II or FCC-ee setting; it is just a
+generic high-energy lepton-collider smoke-test value chosen to avoid low-energy
+MadGraph card edge cases.
 
 The script performs these steps:
 
@@ -293,7 +294,7 @@ Delphes does not like overwriting an existing ROOT output file. The cleanest way
 to rerun is to use a new work directory:
 
 ```bash
-./run_mg5_to_delphes_smoke_test.sh work_002 100 10.0 "$DELPHES_CARD"
+./run_mg5_to_delphes_smoke_test.sh work_002 100 100.0 "$DELPHES_CARD"
 python3 ../../theory/predictions/validate.py work_002 --pipeline-smoke
 ```
 
