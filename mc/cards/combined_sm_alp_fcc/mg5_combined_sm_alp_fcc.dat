@@ -1,0 +1,93 @@
+# ============================================================================
+# MadGraph5_aMC@NLO driver -- COMBINED FCC-ee SM background + ALP signal
+# HONEST variant (physical couplings).  sqrt(s) = 240 GeV.
+# ============================================================================
+# Purpose (physics): a single MG5 process directory holding the full FCC-ee
+# event environment -- the dominant SM 2->2 channels, the hard-photon QED
+# backgrounds relevant to a diphoton/triphoton ALP search, AND the ALP signal
+# line, all generated together and unweighted proportional to cross section.
+#
+# Process list (12 lines):
+#   SM "generic environment" (s-channel / massive 2->2, no special cuts):
+#     e+e- > j j, b b~, mu+ mu-, ta+ ta-, vl vl~, w+ w-, z z, z h
+#   Hard-photon QED backgrounds (pure SM -- CK=0 forbids the ALP vertex so
+#   they do NOT double-count the signal resonance):
+#     e+e- > a a    CK=0     (gamma gamma)
+#     e+e- > a a a  CK=0     (gamma gamma gamma -- key irreducible 3-photon bkg)
+#     e+e- > z a    CK=0     (Z gamma)
+#   ALP signal (the only CK!=0 line):
+#     e+e- > alp a, alp > a a
+#
+# HONEST-variant caveat: sigma(ALP) ~ 3.7e-6 pb vs sigma(SM) ~ 78 pb, a ratio
+# of ~5e-8. An unweighted 1000-event sample therefore contains ~0 ALP events
+# (expected ~5e-5). This is a statistical-mixture certainty, NOT a tooling
+# failure. The gen script counts ALP-tagged LHE events (PDG 9999) and reports
+# the (expected zero) result. Use mg5_combined_sm_alp_fcc_boosted.dat to
+# populate the pipeline with ALP events for end-to-end validation.
+#
+# Model note: photon = 'a' (PDG 22), ALP = 'alp' (PDG 9999, spin 0). The
+# a-a-alp vertex (V_5) has coupling GC_17 ~ (KB+KW)/fa, coupling order CK.
+# Photophilic benchmark: m_a=10 GeV, fa=1000 GeV, KB=KW=1, fermion/gluon
+# couplings zeroed -> BR(alp->gamma gamma)=100%, prompt decay.
+#
+# Model path: __MODEL_PATH__ is replaced at runtime by
+# gen_combined_sm_alp_fcc.sh -- do NOT edit __MODEL_PATH__ directly.
+#
+# Run with:  bash mc/combined_sm_alp_fcc/gen_combined_sm_alp_fcc.sh honest
+# (Do NOT run automatically -- execute on NIKHEF after review.)
+# ============================================================================
+import model __MODEL_PATH__
+
+define j  = g u c d s u~ c~ d~ s~
+define vl = ve vm vt
+define vl~ = ve~ vm~ vt~
+
+generate    e+ e- > j j
+add process e+ e- > b b~
+add process e+ e- > mu+ mu-
+add process e+ e- > ta+ ta-
+add process e+ e- > vl vl~
+add process e+ e- > w+ w-
+add process e+ e- > z z
+add process e+ e- > z h
+add process e+ e- > a a    CK=0
+add process e+ e- > a a a  CK=0
+add process e+ e- > z a    CK=0
+add process e+ e- > alp a, alp > a a
+output PROC_combined_sm_alp_fcc
+launch PROC_combined_sm_alp_fcc
+  done
+  # --- Beams: FCC-ee, symmetric monochromatic, no PDF ---
+  set lpp1 0
+  set lpp2 0
+  set ebeam1 120
+  set ebeam2 120
+  # --- Jet/lepton cuts off (inclusive SM environment) ---
+  set ptj  0
+  set ptb  0
+  set ptl  0
+  set etal -1
+  set drll 0
+  set drjl 0
+  set mmll 0
+  # --- Photon cuts: tame soft/collinear in gamma gamma / gamma gamma gamma /
+  #     Z gamma. Loose enough that the hard ALP photons (~120 GeV recoil,
+  #     two ~tens-of-GeV decay photons) are retained. ---
+  set pta  1.0
+  set etaa 3.0
+  set draa 0.1
+  # --- Statistics ---
+  set nevents 1000
+  set iseed 31415
+  set use_syst False
+  # --- ALP benchmark (identical to the validated signal run) ---
+  set Malp 10
+  set fa   1000
+  set KB   1
+  set KW   1
+  set Kg   0
+  set Cta  0
+  set Cb   0
+  set Ct   0
+  compute_widths alp
+  done

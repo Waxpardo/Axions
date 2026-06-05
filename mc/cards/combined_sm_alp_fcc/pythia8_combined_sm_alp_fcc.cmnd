@@ -1,0 +1,30 @@
+! ===========================================================================
+! Pythia8 shower card -- COMBINED FCC-ee SM+ALP sample (Stage 2)
+! ===========================================================================
+! Showers and hadronizes the combined multi-process LHE from Stage 1 (parton
+! shower, hadronization, W/Z/H and tau decays) into a HepMC2 file for Delphes.
+!
+! The LHEF path is injected at runtime by shower_combined_sm_alp_fcc.sh
+! (token __LHE_PATH__) so this one card serves both the honest and boosted
+! variants, whose LHE files live in different PROC_* directories.
+!
+! Driver: mc/pythia/shower_lhe (vendored PYTHIA 8.310 main44, LHE -> HepMC2).
+! ---------------------------------------------------------------------------
+Beams:frameType = 4
+Beams:LHEF = __LHE_PATH__
+
+! --- Statistics ---
+! numberOfSubruns MUST be >= 1: the shower_lhe driver loops
+!   for (iRuns = 0; iRuns < Main:numberOfSubruns; ++iRuns)
+! so a missing/zero value produces ZERO showered events with no error.
+Main:numberOfEvents   = 1000
+Main:numberOfSubruns  = 1
+Main:subrun           = 0
+Main:timesAllowErrors = 10
+
+! --- Shower, decays, hadronization ---
+HadronLevel:Hadronize = on
+PartonLevel:MPI       = off
+
+! --- Robustness ---
+Check:epTolErr = 2e-2

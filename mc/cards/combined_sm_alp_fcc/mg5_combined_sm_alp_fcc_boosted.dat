@@ -1,0 +1,80 @@
+# ============================================================================
+# MadGraph5_aMC@NLO driver -- COMBINED FCC-ee SM background + ALP signal
+# BOOSTED variant (VALIDATION ONLY -- NON-PHYSICAL COUPLING).  sqrt(s)=240 GeV.
+# ============================================================================
+# Purpose: identical process list and cuts to the honest card, but with the
+# ALP photon coupling raised to KB=KW=2000 (fa kept at 1000 GeV) so that the
+# combined unweighted sample actually CONTAINS ALP events and the full
+# Pythia -> Delphes -> analysis chain can be exercised on a populated signal.
+#
+# WHY this is needed: with physical couplings sigma(ALP)/sigma(SM) ~ 5e-8, so
+# an honest 1000-event sample has ~0 ALP events (see the honest card). Raising
+# the coupling is the clean knob -- keeping fa=1000 GeV stays in the m_a << fa
+# EFT regime and only rescales the dimensionless Wilson coefficient.
+#
+#   sigma(e+e- > gamma a) ∝ (KB+KW)^2 / fa^2
+#   KB=KW=1    -> sigma ~ 3.7e-6 pb   (physical, honest card)
+#   KB=KW=2000 -> sigma ~ 15 pb       (~17% of the combined ~88 pb sample)
+#               -> ~170 ALP events per 1000 unweighted events
+#
+# *** THIS IS NOT A PHYSICS RESULT. *** The coupling is ~2000x its benchmark
+# value, pushing the effective scale fa/(KB+KW) ~ 0.25 GeV which violates the
+# EFT. It exists solely to populate the validation pipeline with a clean
+# m(gamma gamma) = 10 GeV resonance. BR(alp->gamma gamma) stays 100% and the
+# decay stays prompt (the width scales with the coupling but remains << any
+# detector resolution).
+#
+# Model path: __MODEL_PATH__ replaced at runtime -- do NOT edit directly.
+#
+# Run with:  bash mc/combined_sm_alp_fcc/gen_combined_sm_alp_fcc.sh boosted
+# (Do NOT run automatically -- execute on NIKHEF after review.)
+# ============================================================================
+import model __MODEL_PATH__
+
+define j  = g u c d s u~ c~ d~ s~
+define vl = ve vm vt
+define vl~ = ve~ vm~ vt~
+
+generate    e+ e- > j j
+add process e+ e- > b b~
+add process e+ e- > mu+ mu-
+add process e+ e- > ta+ ta-
+add process e+ e- > vl vl~
+add process e+ e- > w+ w-
+add process e+ e- > z z
+add process e+ e- > z h
+add process e+ e- > a a    CK=0
+add process e+ e- > a a a  CK=0
+add process e+ e- > z a    CK=0
+add process e+ e- > alp a, alp > a a
+output PROC_combined_sm_alp_fcc_boosted
+launch PROC_combined_sm_alp_fcc_boosted
+  done
+  set lpp1 0
+  set lpp2 0
+  set ebeam1 120
+  set ebeam2 120
+  set ptj  0
+  set ptb  0
+  set ptl  0
+  set etal -1
+  set drll 0
+  set drjl 0
+  set mmll 0
+  set pta  1.0
+  set etaa 3.0
+  set draa 0.1
+  set nevents 1000
+  set iseed 27182
+  set use_syst False
+  # --- ALP benchmark: m_a=10 GeV, fa=1000 GeV, BOOSTED coupling KB=KW=2000 ---
+  set Malp 10
+  set fa   1000
+  set KB   2000
+  set KW   2000
+  set Kg   0
+  set Cta  0
+  set Cb   0
+  set Ct   0
+  compute_widths alp
+  done
