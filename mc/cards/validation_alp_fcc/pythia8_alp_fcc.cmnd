@@ -1,0 +1,36 @@
+! pythia8_alp_fcc.cmnd
+! ----------------------------------------------------------------------------
+! Pythia8 steering for Stage 2 of the FCC-ee ALP validation.
+! Reads the LHE from MadGraph (Stage 1), applies ISR off the e+e- beams, and
+! writes HepMC2 for Delphes.
+!
+! Physics note: the cascade syntax 'e+ e- > alp a, alp > a a' means the ALP
+! decay is already included in the MG5 matrix element. The LHE events contain
+! the ALP as an intermediate particle (status 2) and three final-state photons.
+! Pythia8 does NOT re-decay the ALP -- it applies QED showering to the
+! initial-state leptons and writes the HepMC output unchanged for the hard
+! process. Particle 9999 (alp) is declared stable below as a safety measure.
+!
+! Run through the driver:  bash mc/shower_validation_alp_fcc.sh
+! ----------------------------------------------------------------------------
+
+! --- Input: parton-level LHE from Stage 1 ---
+Beams:frameType = 4
+Beams:LHEF      = PROC_validation_alp_fcc/Events/run_01/unweighted_events.lhe.gz
+
+! --- ALP: define particle so Pythia accepts property settings ---
+! spinType=1 (spin-0), chargeType=0 (neutral), colType=0 (singlet), m0=10 GeV
+9999:new = alp void 1 0 0 10.0 0.0 0.0 0.0 0.0
+9999:mayDecay = off
+
+! --- Statistics ---
+Main:numberOfEvents   = 10000
+Main:numberOfSubruns  = 1
+Main:subrun           = 0
+Main:timesAllowErrors = 10
+
+! --- Shower / underlying event ---
+PartonLevel:MPI = off
+
+! --- Robustness ---
+Check:epTolErr = 2e-2

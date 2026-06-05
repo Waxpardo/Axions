@@ -1,0 +1,51 @@
+# ============================================================================
+# MadGraph5_aMC@NLO driver script -- e+ e- -> gamma alp, alp -> gamma gamma
+# FCC-ee ALP validation (Stage 1)
+# ============================================================================
+# Purpose (physics): first ALP signal generation. The photophilic benchmark
+# (m_a=10 GeV, fa=1000 GeV, KB=KW=1, fermion/gluon couplings zeroed) gives
+# BR(alp->gamma gamma) = 100% and ctau ~ 5 fm (prompt decay). Final state is
+# three reconstructed photons. The diphoton from the ALP decay peaks at
+# m_gg = m_a = 10 GeV. There is no known-analytic cross-section gate for this
+# process -- confirm only that MG5 completes and events are produced.
+#
+# Purpose (software): exercises the SM_alp_UFO model import and the cascade
+# decay syntax on the FCC-ee IDEA pipeline.
+#
+# Model note: in SM_alp_UFO the photon is named 'a' (PDG 22) and the ALP is
+# named 'alp' (PDG 9999). The process uses the V_5 vertex (a a alp, coupling
+# GC_17 proportional to (KB+KW)/fa). See models/SM_alp_UFO/vertices.py.
+#
+# Model path: __MODEL_PATH__ is replaced at runtime by gen_validation_alp_fcc.sh
+# using the actual repo root -- do NOT edit __MODEL_PATH__ directly.
+#
+# Run with:  bash mc/gen_validation_alp_fcc.sh
+# (Do NOT run automatically -- execute on NIKHEF after review.)
+# ============================================================================
+import model __MODEL_PATH__
+generate e+ e- > alp a, alp > a a
+output PROC_validation_alp_fcc
+launch PROC_validation_alp_fcc
+  done
+  # --- Beam: FCC-ee Higgs-factory energy, symmetric monochromatic beams ---
+  set lpp1 0
+  set lpp2 0
+  set ebeam1 120
+  set ebeam2 120
+  # --- Event count: 5000 for a clean peak in the m_gg validation plot ---
+  set nevents 5000
+  set use_syst False
+  # --- ALP benchmark: photophilic, m_a=10 GeV, fa=1000 GeV ---
+  # Fermion and gluon couplings zeroed -> BR(alp->gg) = 100%, no QCD activity.
+  set Malp 10
+  set fa   1000
+  set KB   1
+  set KW   1
+  set Kg   0
+  set Cta  0
+  set Cb   0
+  set Ct   0
+  # Let MG5 compute Walp from the model's decays.py partial_widths.
+  # At these settings: Gamma(alp->gamma gamma) ~ 1.2e-10 GeV, ctau ~ 5 fm.
+  compute_widths alp
+  done
