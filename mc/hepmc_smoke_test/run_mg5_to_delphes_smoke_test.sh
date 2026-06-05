@@ -59,16 +59,20 @@ n_events = sys.argv[2]
 sqrt_s = float(sys.argv[3])
 beam_energy = sqrt_s / 2.0
 
-updates = {
+required_updates = {
     "nevents": n_events,
     "lpp1": "0",
     "lpp2": "0",
     "ebeam1": f"{beam_energy:.12g}",
     "ebeam2": f"{beam_energy:.12g}",
+}
+optional_updates = {
+    "pdlabel": "none",
     "pdlabel1": "none",
     "pdlabel2": "none",
     "use_syst": "False",
 }
+updates = {**required_updates, **optional_updates}
 
 lines = run_card.read_text().splitlines()
 updated = []
@@ -89,7 +93,7 @@ for line in lines:
     updated.append(f"  {updates[matched_key]}\t= {matched_key}{comment}")
     seen.add(matched_key)
 
-for key, value in updates.items():
+for key, value in required_updates.items():
     if key not in seen:
         updated.append(f"  {value}\t= {key}")
 run_card.write_text("\n".join(updated) + "\n")
