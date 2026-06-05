@@ -30,6 +30,20 @@ if command -v pythia8-config >/dev/null 2>&1; then
   export PYTHIA8DATA="${PYTHIA8_ROOT}/share/Pythia8/xmldoc"
 fi
 
+if [[ -z "${ZLIB_ROOT:-}" ]]; then
+  for header in \
+    "${LCG_VIEW}/include/zlib.h" \
+    "/usr/include/zlib.h" \
+    /cvmfs/sft.cern.ch/lcg/releases/zlib/*/x86_64-centos7-gcc13-opt/include/zlib.h \
+    /cvmfs/sft.cern.ch/lcg/releases/zlib/*/x86_64-centos7-gcc12-opt/include/zlib.h \
+    /cvmfs/sft.cern.ch/lcg/releases/zlib/*/x86_64-centos7-gcc11-opt/include/zlib.h; do
+    if [[ -f "${header}" ]]; then
+      export ZLIB_ROOT="$(cd "$(dirname "${header}")/.." && pwd)"
+      break
+    fi
+  done
+fi
+
 # Delphes is not vendored in this repository. Prefer the Delphes package set by
 # the selected LCG view; if it is unset, fall back to the LCG108-compatible build.
 export DELPHES_DIR="${DELPHES_DIR:-/cvmfs/sft.cern.ch/lcg/releases/delphes/3.5.1pre12-ae61c/x86_64-el9-gcc15-opt}"
@@ -59,6 +73,7 @@ fi
 echo "=== Nikhef MG5/Pythia/HepMC/Delphes Environment ==="
 echo "MG5ROOT=${MG5ROOT}"
 echo "LCG_VIEW=${LCG_VIEW}"
+echo "ZLIB_ROOT=${ZLIB_ROOT:-unset}"
 echo "DELPHES_DIR=${DELPHES_DIR:-unset}"
 echo "DELPHES_CARD=${DELPHES_CARD:-unset}"
 command -v g++ || true

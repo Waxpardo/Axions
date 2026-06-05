@@ -57,11 +57,19 @@ for exe in g++ pythia8-config root-config DelphesHepMC2; do
   fi
 done
 
+zlib_flags=()
+if [[ -n "${ZLIB_ROOT:-}" ]]; then
+  [[ -d "${ZLIB_ROOT}/include" ]] && zlib_flags+=("-I${ZLIB_ROOT}/include")
+  [[ -d "${ZLIB_ROOT}/lib" ]] && zlib_flags+=("-L${ZLIB_ROOT}/lib")
+fi
+
 g++ run_pythia.cc \
   -I"${LCG_VIEW}/include" \
+  "${zlib_flags[@]}" \
   $(pythia8-config --cflags --libs) \
   -L"${LCG_VIEW}/lib" \
   -lHepMC \
+  -lz \
   -o run_pythia
 
 ./run_pythia "${lhe_path}" "${n_events}" "${hepmc_out}"
