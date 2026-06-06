@@ -1,4 +1,18 @@
-# Placeholder param card.
-# Generate a model-specific template from MG5 after installing ALP_linear,
-# then use mc/make_param_card.py to write mass, coupling, and width per point.
-
+# Generated per point by mc/make_param_card.py.
+# Example from the repository root:
+#
+#   python3 mc/make_param_card.py \
+#     --out mc/cards/fccee/param_card.dat \
+#     --m-a 1.0 \
+#     --g-agg 1e-4 \
+#     --fa 1000 \
+#     --width-mode stable
+#
+# The UFO-native scan handles are fa, KB, and KW. The writer converts
+# physical g_agg to KB+KW using the Gate-1 production normalization:
+#
+#   g_agg = alpha_em * (KB + KW) / (sqrt(2) * pi * fa)
+#
+# By default, --g-agg uses the KB/KW split that cancels the tree-level
+# gamma-Z-ALP coupling. Use --kb-fraction only when intentionally scanning a
+# different electroweak-basis split.

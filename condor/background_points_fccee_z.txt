@@ -1,0 +1,2 @@
+0 resolved_3gamma 91.2 10000 fccee_z_backgrounds IDEA medium
+1 invisible_gamma_nunu 91.2 10000 fccee_z_backgrounds IDEA medium

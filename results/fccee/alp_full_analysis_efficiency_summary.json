@@ -1,0 +1,64 @@
+{
+  "scan_summary": "results/fccee/alp_full_scan_summary.csv",
+  "config": "analysis/configs/fccee_zpole_inputs.json",
+  "background_bins": "results/fccee/fccee_background_bins.csv",
+  "projection": "results/fccee/fccee_projection.csv",
+  "output": "results/fccee/alp_full_analysis_efficiency_map.csv",
+  "n_rows": 284,
+  "channels": {
+    "resolved_prompt": 98,
+    "invisible_lower": 93,
+    "invisible_upper": 93
+  },
+  "selected_fraction_by_channel": {
+    "min": {
+      "invisible_lower": 0.5162,
+      "invisible_upper": 0.0059,
+      "resolved_prompt": 0.8672
+    },
+    "max": {
+      "invisible_lower": 0.9852,
+      "invisible_upper": 0.1967,
+      "resolved_prompt": 0.9524
+    },
+    "mean": {
+      "invisible_lower": 0.959105376344086,
+      "invisible_upper": 0.01867311827956989,
+      "resolved_prompt": 0.8859244897959183
+    }
+  },
+  "strength_ratio_by_channel": {
+    "min": {
+      "invisible_lower": 1.1277031516063312,
+      "invisible_upper": 1.0401333748807509,
+      "resolved_prompt": 0.6657018348809467
+    },
+    "max": {
+      "invisible_lower": 1.1766500786044427,
+      "invisible_upper": 181783777.78335348,
+      "resolved_prompt": 1.9636653319505886
+    },
+    "mean": {
+      "invisible_lower": 1.1565792964332176,
+      "invisible_upper": 9583410.93148832,
+      "resolved_prompt": 1.180349640440838
+    }
+  },
+  "detector_correction_by_channel": {
+    "min": {
+      "invisible_lower": 0.9694853234535944,
+      "invisible_upper": 0.918505585514338,
+      "resolved_prompt": 0.9004077433440705
+    },
+    "max": {
+      "invisible_lower": 1.0027395581058038,
+      "invisible_upper": 149496011.06351823,
+      "resolved_prompt": 2.624614300181404
+    },
+    "mean": {
+      "invisible_lower": 0.9983446941064318,
+      "invisible_upper": 7783864.301567496,
+      "resolved_prompt": 1.0156925903963547
+    }
+  }
+}

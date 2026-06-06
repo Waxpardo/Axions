@@ -1,0 +1,29 @@
+universe = vanilla
+
+# Final detector-level ALP scan generated from the FCC-ee contour CSV.
+# Every point runs MG5 -> Pythia -> Delphes and requires the channel-aware
+# detector validation to pass.
+
+executable = /data/alice/ipardoza/Axions/condor/run_alp_full_point.sh
+initialdir = /data/alice/ipardoza/Axions
+
+getenv = True
+
+request_cpus = 1
+request_memory = 4GB
+request_disk = 6GB
+
++JobCategory = "$(JOB_CATEGORY)"
++UseOS = "el9"
+
+should_transfer_files = NO
+
+POINTS_FILE = condor/alp_full_points_fccee_z_projection.txt
+
+log = logs/alp_full_production/$(CAMPAIGN)/job_$(Cluster)_$(JOBID).log
+output = logs/alp_full_production/$(CAMPAIGN)/job_$(Cluster)_$(JOBID).out
+error = logs/alp_full_production/$(CAMPAIGN)/job_$(Cluster)_$(JOBID).err
+
+arguments = $(Cluster) $(JOBID) $(MASS_GEV) $(G_GEV_INV) $(SQRT_S_GEV) $(NEVENTS) $(CAMPAIGN) $(DETECTOR) $(CHANNEL)
+
+queue JOBID, MASS_GEV, G_GEV_INV, SQRT_S_GEV, NEVENTS, CAMPAIGN, DETECTOR, CHANNEL, JOB_CATEGORY from $(POINTS_FILE)

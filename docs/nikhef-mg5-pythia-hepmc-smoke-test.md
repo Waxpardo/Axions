@@ -404,3 +404,11 @@ Gate 2: ALP width and lifetime convention
 Gate 3: Belle II closure
 Gate 4: FCC-ee sanity check
 ```
+
+Gate 3 is now available from the central validator:
+
+```bash
+python3 theory/predictions/validate.py \
+  --belle2-closure \
+  --axionlimits-dir external/AxionLimits
+```

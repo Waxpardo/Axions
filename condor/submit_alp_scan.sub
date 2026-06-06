@@ -1,0 +1,33 @@
+universe = vanilla
+
+# ALP production-only scan:
+#   e+ e- -> alp gamma
+#
+# The points file supplies one row per mass/collider point. The default grid is
+# FCC-ee Z-pole with 50 log-spaced masses and one reference coupling. Because
+# sigma_prod is proportional to g_agg^2, downstream scans can rescale this
+# reference sample to the full coupling grid.
+
+executable = /data/alice/ipardoza/Axions/condor/run_alp_point.sh
+initialdir = /data/alice/ipardoza/Axions
+
+getenv = True
+
+request_cpus = 1
+request_memory = 4GB
+request_disk = 4GB
+
++JobCategory = "$(JOB_CATEGORY)"
++UseOS = "el9"
+
+should_transfer_files = NO
+
+POINTS_FILE = condor/alp_mass_grid_fccee_z_50.txt
+
+log = logs/alp_production/$(CAMPAIGN)/job_$(Cluster)_$(JOBID).log
+output = logs/alp_production/$(CAMPAIGN)/job_$(Cluster)_$(JOBID).out
+error = logs/alp_production/$(CAMPAIGN)/job_$(Cluster)_$(JOBID).err
+
+arguments = $(Cluster) $(JOBID) $(MASS_GEV) $(SQRT_S_GEV) $(G_REF_GEV_INV) $(NEVENTS) $(CAMPAIGN)
+
+queue JOBID, MASS_GEV, SQRT_S_GEV, G_REF_GEV_INV, NEVENTS, CAMPAIGN, JOB_CATEGORY from $(POINTS_FILE)

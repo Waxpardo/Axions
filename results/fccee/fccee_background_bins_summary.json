@@ -1,0 +1,38 @@
+{
+  "output": "results/fccee/fccee_background_bins.csv",
+  "luminosity_ab_inv": 150.0,
+  "channels": {
+    "resolved_prompt": {
+      "source_root": "results/backgrounds/fccee_z_backgrounds/cluster_4796877/job0_resolved_3gamma/resolved_3gamma_delphes.root",
+      "n_generated": 10000,
+      "raw_entries": 23592,
+      "sigma_pb": 7.3063,
+      "bkg_events_total": 2581827231.0
+    },
+    "invisible": {
+      "source_root": "results/backgrounds/fccee_z_backgrounds/cluster_4796877/job1_invisible_gamma_nunu/invisible_gamma_nunu_delphes.root",
+      "n_generated": 10000,
+      "raw_entries": 2684,
+      "sigma_pb": 134.88513286,
+      "bkg_events_total": 5430475448.9436
+    }
+  },
+  "bins_by_channel": {
+    "invisible": 264,
+    "resolved_prompt": 240
+  },
+  "bkg_events_by_channel": {
+    "min": {
+      "invisible": 0.0,
+      "resolved_prompt": 657567.0
+    },
+    "max": {
+      "invisible": 627215867.799,
+      "resolved_prompt": 29480920.5
+    },
+    "sum": {
+      "invisible": 5430475448.9436,
+      "resolved_prompt": 2581827231.0
+    }
+  }
+}

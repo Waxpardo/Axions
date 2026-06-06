@@ -1,0 +1,27 @@
+{
+  "run_dir": "results/alp_full_pipeline/belle2_hist_m1_g1em5_s10p58_n500",
+  "validation_summary": "results/alp_full_pipeline/belle2_hist_m1_g1em5_s10p58_n500/validation_summary.json",
+  "histogram_summary": "results/alp_full_pipeline/belle2_hist_m1_g1em5_s10p58_n500/alp_histograms_summary.json",
+  "pythia_summary": "results/alp_full_pipeline/belle2_hist_m1_g1em5_s10p58_n500/pythia_lifetime_summary.json",
+  "delphes_root": "results/alp_full_pipeline/belle2_hist_m1_g1em5_s10p58_n500/delphes.root",
+  "delphes_root_local_exists": false,
+  "histogram_root": "results/alp_full_pipeline/belle2_hist_m1_g1em5_s10p58_n500/alp_histograms.root",
+  "target_m_a_GeV": 1.0,
+  "mass_tolerance_GeV": 0.2,
+  "resolved_best_mgg_mean_GeV": 1.0375553576842598,
+  "resolved_best_mgg_abs_error_GeV": 0.03755535768425977,
+  "events": 500,
+  "events_ge_3_photons": 46,
+  "mean_reco_photons": 1.792,
+  "ctau_input_mm": 0.396749434867,
+  "mean_lab_decay_length_mm": 2.275433802278,
+  "checks": {
+    "cross_section": true,
+    "width": true,
+    "pythia_lifetime": true,
+    "delphes_root": true,
+    "alp_mass_histogram": true
+  },
+  "passed": true,
+  "note": "This verifies the Belle II-like simulation chain. It is not the published Belle II exclusion-contour closure test."
+}

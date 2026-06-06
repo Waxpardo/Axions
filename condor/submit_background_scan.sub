@@ -1,0 +1,25 @@
+universe = vanilla
+
+executable = /data/alice/ipardoza/Axions/condor/run_background_point.sh
+initialdir = /data/alice/ipardoza/Axions
+
+getenv = True
+
+request_cpus = 1
+request_memory = 4GB
+request_disk = 8GB
+
++JobCategory = "$(JOB_CATEGORY)"
++UseOS = "el9"
+
+should_transfer_files = NO
+
+POINTS_FILE = condor/background_points_fccee_z.txt
+
+log = logs/backgrounds/$(CAMPAIGN)/job_$(Cluster)_$(JOBID).log
+output = logs/backgrounds/$(CAMPAIGN)/job_$(Cluster)_$(JOBID).out
+error = logs/backgrounds/$(CAMPAIGN)/job_$(Cluster)_$(JOBID).err
+
+arguments = $(Cluster) $(JOBID) $(SAMPLE) $(SQRT_S_GEV) $(NEVENTS) $(CAMPAIGN) $(DETECTOR)
+
+queue JOBID, SAMPLE, SQRT_S_GEV, NEVENTS, CAMPAIGN, DETECTOR, JOB_CATEGORY from $(POINTS_FILE)

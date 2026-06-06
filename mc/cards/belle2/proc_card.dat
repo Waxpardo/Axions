@@ -1,5 +1,4 @@
-import model ALP_linear
-# Photon is `a`; ALP label must be verified in models/ALP_linear/particles.py.
-generate e+ e- > ax a
+import model models/ALP_linear/SM_alp_UFO
+# Photon is `a`; the ALP is `alp` with PDG 9999 in this UFO.
+generate e+ e- > alp a
 output PROC_belle2_signal
-

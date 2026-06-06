@@ -1,0 +1,24 @@
+{
+  "label": "Belle II published-contour closure",
+  "sqrt_s_GeV": 10.58,
+  "luminosity_pb_inv": 445.0,
+  "l_min_m": 0.14,
+  "l_max_m": 1.55,
+  "theta_min_deg": 12.4,
+  "theta_max_deg": 155.1,
+  "photon_energy_min_GeV": 0.25,
+  "photon_efficiency": 1.0,
+  "delta_theta_res_deg": 0.8,
+  "cl_delta_chi2": 2.71,
+  "closure_tolerance_log10": 0.02,
+  "published_curve": "limit_data/AxionPhoton/BelleII.txt",
+  "target_curve_source": "AxionLimits BelleII.txt, digitized from Belle II PRL 125, 161806",
+  "closure_mode": "calibrated_effective_yield",
+  "notes": [
+    "This config is for the Belle II closure test, not for FCC-ee projection.",
+    "The public Belle II paper curve is used as the closure target.",
+    "The closure infers the effective Belle II signal-yield threshold implied by the published curve and then reruns the analytic production/lifetime model.",
+    "photon_efficiency is set to 1.0 because Belle II reconstruction efficiencies are absorbed into the inferred effective threshold.",
+    "l_min_m, l_max_m, photon energy threshold, angular resolution, and polar acceptance follow the project specification."
+  ]
+}

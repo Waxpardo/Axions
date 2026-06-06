@@ -1,0 +1,11 @@
+{
+  "name": "AxionLimits",
+  "repository": "https://github.com/cajohare/AxionLimits.git",
+  "docs": "https://cajohare.github.io/AxionLimits/docs/ap.html",
+  "commit": "7d375f4879b32406a239fe48d2615a4bfd9bc0bb",
+  "commit_date": "2026-01-27 10:38:52 +1100",
+  "commit_subject": "small correction",
+  "zenodo_doi": "10.5281/zenodo.3932430",
+  "usage": "Context landscape for axion-photon constraints. Project limits are overlaid separately.",
+  "caveat": "AxionLimits is a curated constraints compilation; individual bounds can use different assumptions and statistical conventions."
+}

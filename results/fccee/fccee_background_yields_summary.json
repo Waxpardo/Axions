@@ -1,0 +1,23 @@
+{
+  "output": "results/fccee/fccee_background_yields.csv",
+  "sqrt_s_GeV": 91.2,
+  "luminosity_ab_inv": 150.0,
+  "channels": {
+    "resolved_prompt": 180,
+    "invisible": 180
+  },
+  "bkg_events_by_channel": {
+    "min": {
+      "invisible": 0.0,
+      "resolved_prompt": 109594.5
+    },
+    "max": {
+      "invisible": 0.0,
+      "resolved_prompt": 251628972.0
+    },
+    "mean": {
+      "invisible": 0.0,
+      "resolved_prompt": 23342410.783333335
+    }
+  }
+}

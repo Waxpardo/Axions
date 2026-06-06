@@ -7,6 +7,7 @@ import gzip
 import json
 import math
 import re
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -128,6 +129,16 @@ def find_delphes_root(run_dir: Path) -> Path | None:
     return _first_existing(candidates)
 
 
+def find_pythia_summary(run_dir: Path) -> Path | None:
+    candidates = [
+        run_dir / "pythia_lifetime_summary.json",
+        run_dir / "alp_pythia_summary.json",
+    ]
+    candidates.extend(sorted(run_dir.glob("*pythia*summary*.json")))
+    candidates.extend(sorted(run_dir.glob("**/*pythia*summary*.json")))
+    return _first_existing(candidates)
+
+
 def find_width_file(run_dir: Path) -> Path | None:
     candidates = [run_dir / "width.txt", run_dir / "compute_widths.txt"]
     candidates.extend(sorted(run_dir.glob("*width*.txt")))
@@ -162,10 +173,18 @@ def parse_width_gev(width_path: Path, alp_pdg_id: int = 9999) -> float:
     """Parse ALP width in GeV from a compute_widths or param-card-like file"""
     decay_pattern = re.compile(r"^\s*DECAY\s+%d\s+(%s)\b" % (alp_pdg_id, FLOAT_RE), re.IGNORECASE)
     generic_pattern = re.compile(r"\b(?:width|gamma)\b[^\d+\-.]*(%s)" % FLOAT_RE, re.IGNORECASE)
+
+    # Prefer the unambiguous SLHA DECAY entry. Generated param cards contain
+    # explanatory comments with strings like "sqrt(2)", which would otherwise be
+    # easy to mistake for a generic width value.
     for line in _read_lines(width_path):
         match = decay_pattern.search(line)
         if match:
             return float(match.group(1))
+
+    for line in _read_lines(width_path):
+        if line.lstrip().startswith("#"):
+            continue
         match = generic_pattern.search(line)
         if match:
             return float(match.group(1))
@@ -226,9 +245,14 @@ def parse_param_card(param_card: Path, alp_pdg_id: int = 9999) -> dict[str, floa
                 result[label] = value
         elif current_block == "MASS" and code == alp_pdg_id:
             result["m_a_GeV"] = value
+        elif current_block == "SMINPUTS" and (code == 1 or label == "aewm1"):
+            result["aEWM1"] = value
 
     if {"fa_GeV", "KB", "KW"} <= result.keys():
-        result["g_agg_ufo_guess_GeV_inv"] = ALPHA * (result["KB"] + result["KW"]) / (2.0 * math.pi * result["fa_GeV"])
+        alpha_em = 1.0 / result.get("aEWM1", 1.0 / ALPHA)
+        k_sum = result["KB"] + result["KW"]
+        result["g_agg_ufo_GeV_inv"] = alpha_em * k_sum / (math.sqrt(2.0) * math.pi * result["fa_GeV"])
+        result["g_agg_ufo_width_GeV_inv"] = alpha_em * k_sum / (math.pi * result["fa_GeV"])
     return result
 
 
@@ -269,6 +293,40 @@ def gate2_width(width_gev_from_mg: float, m_a: float, g_agg: float, tol: float =
         "theory_width_64pi_GeV": theory_width,
         "ratio_to_64pi": ratio,
         "tolerance": tol,
+    }
+
+
+def gate3_belle2_closure(
+    config_path: Path,
+    axionlimits_dir: Path | None,
+    out_dir: Path,
+    n_mass: int,
+    g_min: float,
+    g_max: float,
+) -> dict[str, Any]:
+    """Run the Belle II published-contour closure as Validation Gate 3."""
+    repo_root = Path(__file__).resolve().parents[2]
+    if str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
+
+    from analysis.belle2_closure import run_belle2_closure
+
+    summary = run_belle2_closure(
+        config=config_path,
+        axionlimits_dir=axionlimits_dir,
+        out_dir=out_dir,
+        n_mass=n_mass,
+        g_min=g_min,
+        g_max=g_max,
+    )
+    return {
+        "gate": "belle2_closure",
+        "passed": summary.get("status") == "passed",
+        "summary_path": str(out_dir / "belle2_closure_summary.json"),
+        "plot_png": str(out_dir / "belle2_closure.png"),
+        "plot_pdf": str(out_dir / "belle2_closure.pdf"),
+        "report_path": str(out_dir / "belle2_closure.md"),
+        "summary": summary,
     }
 
 
@@ -377,6 +435,73 @@ def validate_pipeline_outputs(run_dir: Path, plots_dir: Path | None = None) -> d
     summary_path.write_text(json.dumps(results, indent=2))
     results["summary_path"] = str(summary_path)
     return results
+
+
+def validate_pythia_lifetime_summary(
+    summary_path: Path,
+    m_a: float,
+    g_agg: float,
+    decay_tolerance: float | None = None,
+    width_tolerance: float = 0.05,
+) -> dict[str, Any]:
+    """Validate Pythia ALP decay/lifetime metadata written by the C++ runner."""
+    data = json.loads(summary_path.read_text())
+    gamma_tool = _require_prediction_tool("gamma_a")
+    theory_width = float(gamma_tool(m_a, g_agg))
+    width_input = float(data.get("width_input_GeV", math.nan))
+    width_ratio = width_input / theory_width if theory_width else math.inf
+
+    ctau_input = float(data.get("ctau_input_mm", math.nan))
+    ctau_theory = float(data.get("ctau_theory_64pi_mm", math.nan))
+    ctau_ratio = ctau_input / ctau_theory if ctau_theory else math.inf
+
+    mean_lab = float(data.get("mean_lab_decay_length_mm", math.nan))
+    mean_expected = float(data.get("mean_expected_lab_decay_length_mm", math.nan))
+    decay_ratio = mean_lab / mean_expected if mean_expected else math.inf
+    n_decays = int(data.get("alp_decays", 0))
+
+    # The lab decay length is a stochastic exponential mean. For small smoke
+    # tests allow a wider band, then tighten naturally as n grows.
+    if decay_tolerance is None:
+        decay_tolerance = max(0.10, 5.0 / math.sqrt(max(n_decays, 1)))
+
+    mean_photons = float(data.get("mean_final_state_photons_per_event", math.nan))
+    prompt_length_floor_mm = 1.0e-3
+    prompt_decay_ok = (
+        math.isfinite(mean_expected)
+        and mean_expected < prompt_length_floor_mm
+        and math.isfinite(mean_lab)
+        and mean_lab < prompt_length_floor_mm
+    )
+    stochastic_decay_ok = abs(decay_ratio - 1.0) < decay_tolerance
+
+    return {
+        "observable": "pythia_alp_lifetime",
+        "passed": (
+            abs(width_ratio - 1.0) < width_tolerance
+            and abs(ctau_ratio - 1.0) < width_tolerance
+            and (stochastic_decay_ok or prompt_decay_ok)
+            and n_decays > 0
+            and mean_photons >= 2.8
+        ),
+        "summary_path": str(summary_path),
+        "width_input_GeV": width_input,
+        "width_theory_64pi_GeV": theory_width,
+        "width_ratio": width_ratio,
+        "width_tolerance": width_tolerance,
+        "ctau_input_mm": ctau_input,
+        "ctau_theory_64pi_mm": ctau_theory,
+        "ctau_ratio": ctau_ratio,
+        "mean_lab_decay_length_mm": mean_lab,
+        "mean_expected_lab_decay_length_mm": mean_expected,
+        "decay_length_ratio": decay_ratio,
+        "decay_length_tolerance": decay_tolerance,
+        "prompt_length_floor_mm": prompt_length_floor_mm,
+        "prompt_decay_ok": prompt_decay_ok,
+        "stochastic_decay_ok": stochastic_decay_ok,
+        "n_decays": n_decays,
+        "mean_final_state_photons_per_event": mean_photons,
+    }
 
 
 def _particle_energy(particle: Any) -> float:
@@ -599,6 +724,8 @@ def validate_point(
     width_path: Path | None = None,
     lhe_path: Path | None = None,
     hepmc_path: Path | None = None,
+    pythia_summary_path: Path | None = None,
+    delphes_path: Path | None = None,
     plots_dir: Path | None = None,
 ) -> dict[str, Any]:
     """Run all available validation checks for one MC production point."""
@@ -630,11 +757,23 @@ def validate_point(
         results["checks"].append(validate_angular(lhe_path, m_a, sqrt_s, plots_dir / "val_angular.png"))
         results["lhe_path"] = str(lhe_path)
 
+    pythia_summary_path = pythia_summary_path or find_pythia_summary(run_dir)
+    if pythia_summary_path:
+        results["checks"].append(validate_pythia_lifetime_summary(pythia_summary_path, m_a, g_agg))
+        results["pythia_summary_path"] = str(pythia_summary_path)
+
     hepmc_path = hepmc_path or find_hepmc(run_dir)
-    if hepmc_path:
+    if hepmc_path and not pythia_summary_path:
         results["checks"].append(validate_decay_length(hepmc_path, m_a, g_agg, sqrt_s, alp_pdg_id, plots_dir / "val_decaylen.png"))
         results["checks"].append(validate_opening_angle(hepmc_path, m_a, sqrt_s, alp_pdg_id, plots_dir / "val_opening.png"))
         results["hepmc_path"] = str(hepmc_path)
+    elif hepmc_path:
+        results["hepmc_path"] = str(hepmc_path)
+
+    delphes_path = delphes_path or find_delphes_root(run_dir)
+    if delphes_path:
+        results["checks"].append(_root_file_check("delphes_root", delphes_path, ["Delphes"]))
+        results["delphes_path"] = str(delphes_path)
 
     summary_path = plots_dir / "validation_summary.json"
     plots_dir.mkdir(parents=True, exist_ok=True)
@@ -654,7 +793,7 @@ def _infer_inputs(args: argparse.Namespace) -> tuple[float, float, float, dict[s
     run_data = parse_run_card(run_card) if run_card else {}
 
     m_a = args.m_a if args.m_a is not None else param_data.get("m_a_GeV")
-    g_agg = args.g if args.g is not None else param_data.get("g_agg_ufo_guess_GeV_inv")
+    g_agg = args.g if args.g is not None else param_data.get("g_agg_ufo_GeV_inv")
     sqrt_s = args.sqrt_s if args.sqrt_s is not None else run_data.get("sqrt_s")
 
     missing = []
@@ -675,8 +814,10 @@ def _print_summary(results: dict[str, Any], param_data: dict[str, float]) -> Non
         print("Parsed param-card metadata:")
         for key in sorted(param_data):
             print(f"  {key}: {param_data[key]:.8g}")
-        if "g_agg_ufo_guess_GeV_inv" in param_data:
-            print("  Note: g_agg_ufo_guess uses alpha*(KB+KW)/(2*pi*fa); lock this mapping with Gate 1/2.")
+        if "g_agg_ufo_GeV_inv" in param_data:
+            print("  Note: g_agg_ufo uses alpha_em*(KB+KW)/(sqrt(2)*pi*fa), fixed by Gate 1 production normalization.")
+            if "g_agg_ufo_width_GeV_inv" in param_data:
+                print("  Note: g_agg_ufo_width uses alpha_em*(KB+KW)/(pi*fa), useful for Gate 2 width diagnostics.")
     print(f"Validation summary: {results['summary_path']}")
     for check in results["checks"]:
         name = check.get("gate") or check.get("observable")
@@ -698,14 +839,40 @@ def _print_pipeline_summary(results: dict[str, Any]) -> None:
             print(f"    {key}: {value}")
 
 
+def _print_belle2_closure_summary(results: dict[str, Any]) -> None:
+    summary = results["summary"]
+    residual = summary["closure_residual_log10"]
+    events = summary["effective_signal_events"]
+    print(f"Gate 3 Belle II closure summary: {results['summary_path']}")
+    print(f"Overall passed: {results['passed']}")
+    print(f"Target curve: {summary['target_curve']}")
+    print(f"Closure mode: {summary['closure_mode']}")
+    print(f"Closure plot: {results['plot_png']}")
+    print(f"Max |log10(g_closure/g_published)|: {residual['max_abs']:.6g}")
+    print(f"RMS log10 residual: {residual['rms']:.6g}")
+    print(f"Median effective signal events: {events['median']:.6g}")
+    print(f"Effective signal-event range: {events['min']:.6g}--{events['max']:.6g}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Validate one MC point against theory predictions.")
-    parser.add_argument("run_dir", type=Path)
+    parser.add_argument("run_dir", type=Path, nargs="?")
     parser.add_argument(
         "--pipeline-smoke",
         action="store_true",
         help="Validate the non-ALP MG5/Pythia/HepMC/ROOT/Delphes smoke-test outputs.",
     )
+    parser.add_argument(
+        "--belle2-closure",
+        action="store_true",
+        help="Run Gate 3: published-contour closure against the Belle II limit in AxionLimits.",
+    )
+    parser.add_argument("--belle2-config", type=Path, default=Path("analysis/configs/belle2_closure_inputs.json"))
+    parser.add_argument("--axionlimits-dir", type=Path, default=None)
+    parser.add_argument("--belle2-out-dir", type=Path, default=Path("results/belle2_closure"))
+    parser.add_argument("--n-mass", type=int, default=300)
+    parser.add_argument("--g-min", type=float, default=1.0e-7)
+    parser.add_argument("--g-max", type=float, default=1.0)
     parser.add_argument("--m-a", type=float, default=None)
     parser.add_argument("--g", type=float, default=None, help="Physical g_agg in GeV^-1.")
     parser.add_argument("--sqrt-s", type=float, default=None)
@@ -714,10 +881,27 @@ def main() -> None:
     parser.add_argument("--width-file", type=Path, default=None)
     parser.add_argument("--lhe", type=Path, default=None)
     parser.add_argument("--hepmc", type=Path, default=None)
+    parser.add_argument("--pythia-summary", type=Path, default=None)
+    parser.add_argument("--delphes", type=Path, default=None)
     parser.add_argument("--param-card", type=Path, default=None)
     parser.add_argument("--run-card", type=Path, default=None)
     parser.add_argument("--plots-dir", type=Path, default=None)
     args = parser.parse_args()
+
+    if args.belle2_closure:
+        results = gate3_belle2_closure(
+            config_path=args.belle2_config,
+            axionlimits_dir=args.axionlimits_dir,
+            out_dir=args.belle2_out_dir,
+            n_mass=args.n_mass,
+            g_min=args.g_min,
+            g_max=args.g_max,
+        )
+        _print_belle2_closure_summary(results)
+        raise SystemExit(0 if results["passed"] else 1)
+
+    if args.run_dir is None:
+        parser.error("run_dir is required unless --belle2-closure is used")
 
     if args.pipeline_smoke:
         results = validate_pipeline_outputs(args.run_dir, args.plots_dir)
@@ -735,6 +919,8 @@ def main() -> None:
         width_path=args.width_file,
         lhe_path=args.lhe,
         hepmc_path=args.hepmc,
+        pythia_summary_path=args.pythia_summary,
+        delphes_path=args.delphes,
         plots_dir=args.plots_dir,
     )
     _print_summary(results, param_data)

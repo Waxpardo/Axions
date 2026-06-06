@@ -1,10 +1,28 @@
-# HTCondor scan scaffold.
-# Queue over the mass grid after condor/run_point.sh is implemented.
+universe = vanilla
 
-executable = condor/run_point.sh
-arguments =
-output = results/condor_$(Cluster)_$(Process).out
-error = results/condor_$(Cluster)_$(Process).err
-log = results/condor_$(Cluster).log
-queue 1
+# Backward-compatible ALP production submit file.
+# Equivalent to condor/submit_alp_scan.sub.
 
+executable = /data/alice/ipardoza/Axions/condor/run_alp_point.sh
+initialdir = /data/alice/ipardoza/Axions
+
+getenv = True
+
+request_cpus = 1
+request_memory = 4GB
+request_disk = 4GB
+
++JobCategory = "$(JOB_CATEGORY)"
++UseOS = "el9"
+
+should_transfer_files = NO
+
+POINTS_FILE = condor/alp_mass_grid_fccee_z_50.txt
+
+log = logs/alp_production/$(CAMPAIGN)/job_$(Cluster)_$(JOBID).log
+output = logs/alp_production/$(CAMPAIGN)/job_$(Cluster)_$(JOBID).out
+error = logs/alp_production/$(CAMPAIGN)/job_$(Cluster)_$(JOBID).err
+
+arguments = $(Cluster) $(JOBID) $(MASS_GEV) $(SQRT_S_GEV) $(G_REF_GEV_INV) $(NEVENTS) $(CAMPAIGN)
+
+queue JOBID, MASS_GEV, SQRT_S_GEV, G_REF_GEV_INV, NEVENTS, CAMPAIGN, JOB_CATEGORY from $(POINTS_FILE)

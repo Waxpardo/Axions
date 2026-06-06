@@ -1,0 +1,20 @@
+{
+  "input_dir": "results/alp_full_production/fccee_z_full_projection_fullbg_channelaware",
+  "output": "results/fccee/alp_full_scan_summary.csv",
+  "n_summary_files": 284,
+  "n_rows": 284,
+  "gate1_passed": {
+    "passed": 284,
+    "failed": 0
+  },
+  "signature_validation_passed": {
+    "passed": 284,
+    "failed": 0
+  },
+  "campaigns": [
+    "fccee_z_full_projection_fullbg_channelaware"
+  ],
+  "detectors": [
+    "IDEA"
+  ]
+}
