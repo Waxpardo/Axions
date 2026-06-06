@@ -131,6 +131,20 @@ Because the invisible yield is non-monotonic in `g_agg`, the invisible region
 can produce lower and upper roots. These are written as `invisible_lower` and
 `invisible_upper`.
 
+The FCC-ee contour branches have sharp-looking mass endpoints for three
+different reasons. The prompt/resolved branch starts near `0.6 GeV` because the
+analysis requires the ALP daughter photons to be separated by more than the
+IDEA angular-resolution input, `Delta theta_res = 1.5 deg`; using
+`Delta theta_min ~= 4 m_a / sqrt(s)` gives
+`m_a ~= sqrt(s) Delta theta_res / 4 = 0.597 GeV`, and the log mass grid places
+the first solved point at `0.614 GeV`. The invisible branches stop near
+`0.92 GeV` because above that mass the binned-background target is not reached
+by the invisible signal yield with the current assumptions. The prompt/resolved
+branch currently stops at `80 GeV` because the validated projection grid was
+built with `--m-max 80`; extending it closer to the kinematic endpoint would
+require regenerating the projection and detector-correction campaign in that
+mass range.
+
 ## Locked Inputs
 
 Use this config for the FCC-ee Z-pole result:
@@ -274,19 +288,20 @@ python3 analysis/fccee_projection.py \
   --n-g 180
 ```
 
-And rebuild the generic-ALP money plot:
+And rebuild the full ALP money plot:
 
 ```bash
 python3 analysis/make_axionlimits_style_plot.py \
   --axionlimits-dir external/AxionLimits \
   --projection results/fccee/fccee_projection.csv \
-  --constraint-set generic \
-  --output-stem results/fccee/money_plot_generic_alp \
-  --also-save-as results/fccee/money_plot
+  --constraint-set full \
+  --output-stem results/fccee/money_plot_alp_full \
+  --also-save-as results/fccee/money_plot \
+  --combined-output-stem results/fccee/money_plot_alp_full_combined
 ```
 
-Use `--constraint-set full` only for a broad AxionLimits reference plot that
-includes dark-matter and cosmology-assuming regions.
+Use `--constraint-set generic` only for a diagnostic plot that hides
+dark-matter and cosmology-assuming regions.
 
 Build the FCC-ee close-up with:
 
@@ -294,8 +309,8 @@ Build the FCC-ee close-up with:
 python3 analysis/make_axionlimits_style_plot.py \
   --axionlimits-dir external/AxionLimits \
   --projection results/fccee/fccee_projection.csv \
-  --constraint-set generic \
-  --output-stem results/fccee/money_plot_generic_alp_closeup \
+  --constraint-set full \
+  --output-stem results/fccee/money_plot_alp_full_closeup \
   --m-min 1e7 \
   --m-max 1e12 \
   --g-min 1e-8 \

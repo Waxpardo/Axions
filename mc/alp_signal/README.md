@@ -2,9 +2,9 @@
 
 This directory contains the stable signal pipeline for:
 
-```text
-e+ e- -> gamma a,  a -> gamma gamma
-```
+$$
+e^+e^-\to\gamma a,\qquad a\to\gamma\gamma .
+$$
 
 ## Main Entrypoints
 
@@ -29,7 +29,7 @@ mc/alp_signal/run_alp_full_pipeline.sh \
 The script:
 
 1. Writes a UFO param card with `mc/make_param_card.py`.
-2. Generates `e+ e- -> alp gamma` in MadGraph.
+2. Generates $e^+e^-\to a\gamma$ in MadGraph.
 3. Reads the project `64 pi` width from `DECAY 9999`.
 4. Runs Pythia8 with ALP decay and physical lifetime.
 5. Writes `events.hepmc` and `pythia_lifetime_summary.json`.
@@ -46,7 +46,8 @@ invisible
 production_only
 ```
 
-`resolved_prompt` validates reconstructed `M_gg` near `m_a`. `invisible`
+$\texttt{resolved\_prompt}$ validates reconstructed $M_{\gamma\gamma}$ near
+$m_a$. $\texttt{invisible}$
 validates the recoil photon energy and does not require reconstructed ALP decay
 photons.
 
@@ -54,9 +55,10 @@ photons.
 
 The pipeline uses:
 
-```text
-Gamma(a -> gamma gamma) = g_agg^2 m_a^3 / (64 pi)
-```
+$$
+\Gamma(a\to\gamma\gamma)=
+\frac{g_{a\gamma\gamma}^2m_a^3}{64\pi}.
+$$
 
 The UFO-native width expression differs in normalization, so `run_alp_gate2_width.sh`
 is kept as the diagnostic that documents the convention choice. The production

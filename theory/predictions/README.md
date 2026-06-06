@@ -78,7 +78,8 @@ python theory/predictions/validate.py <run_dir> \
 ```
 
 If `<run_dir>` contains `param_card.dat` and `run_card.dat`, the script can infer
-`m_a`, `sqrt_s`, and the UFO-derived `g_agg` from `fa`, `KB`, and `KW`.
+$m_a$, $\sqrt{s}$, and the UFO-derived $g_{a\gamma\gamma}$ from `fa`, `KB`, and
+`KW`.
 
 For the ALP production pipeline, prefer passing the physical coupling used to
 write the point:
@@ -92,24 +93,26 @@ python theory/predictions/validate.py <run_dir> \
 ```
 
 This is the handoff expected once `mc/make_param_card.py` writes each production
-point: the same physical `(m_a, g_agg)` values should be sent to MadGraph and to
-this validator. For `SM_alp_UFO`, Gate 1 fixes the production-normalized mapping
-to:
+point: the same physical $(m_a,g_{a\gamma\gamma})$ values should be sent to
+MadGraph and to this validator. For `SM_alp_UFO`, Gate 1 fixes the
+production-normalized mapping to:
 
-```text
-g_agg = alpha_em * (KB + KW) / (sqrt(2) * pi * fa)
-```
+$$
+g_{a\gamma\gamma}=
+\frac{\alpha_{\mathrm{em}}(K_B+K_W)}
+{\sqrt{2}\,\pi f_a}.
+$$
 
 When `mc/make_param_card.py --g-agg` is used, the default `KB/KW` split cancels
-the tree-level `gamma Z alp` coupling so the production point is aligned with
+the tree-level $\gamma Z a$ coupling so the production point is aligned with
 the photophilic associated-production validation formula.
 
 The direct UFO decay-width normalization is also reported as
 `g_agg_ufo_width_GeV_inv` and is reserved for Gate 2 width/lifetime diagnostics.
 
 Current Gate 2 result for `SM_alp_UFO`: with the Gate-1 production-normalized
-mapping, MG5 `compute_widths alp` returns a two-body ALP width that is `2x` the
-project `64pi` width. The production pipeline therefore writes the project
+mapping, MG5 `compute_widths alp` returns a two-body ALP width that is
+$2\times$ the project `64pi` width. The production pipeline therefore writes the project
 `64pi` width into `DECAY 9999` and passes that same width to Pythia. Run:
 
 ```bash

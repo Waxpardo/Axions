@@ -104,9 +104,10 @@ The FCC-ee limit calculator is now implemented. The active production plan is:
 python analysis/make_axionlimits_style_plot.py \
   --axionlimits-dir external/AxionLimits \
   --projection results/fccee/fccee_projection.csv \
-  --constraint-set generic \
-  --output-stem results/fccee/money_plot_generic_alp \
-  --also-save-as results/fccee/money_plot
+  --constraint-set full \
+  --output-stem results/fccee/money_plot_alp_full \
+  --also-save-as results/fccee/money_plot \
+  --combined-output-stem results/fccee/money_plot_alp_full_combined
 ```
 
 The checked-in projection is a working analysis product, but the numerical

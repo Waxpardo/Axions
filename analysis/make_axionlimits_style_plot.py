@@ -1,10 +1,9 @@
-"""Build an AxionLimits-style axion-photon landscape with FCC-ee overlays.
+"""Build an AxionLimits-style ALP-photon landscape with FCC-ee overlays.
 
-The default plot is for a generic photophilic ALP: it keeps direct
-lab/collider/beam-dump constraints and stellar/helioscope/source constraints
-that do not assume the ALP is the cosmological dark matter. Haloscope, CMB,
-ionisation, freeze-in, and dark-matter-decay regions are intentionally omitted
-from the default money plot because those answer a different physics question.
+The default plot uses the full AxionLimits axion-photon landscape, including
+dark-matter, astrophysical, and cosmological regions. Plot labels are relabeled
+to ALP language for this project, while QCD axion reference regions are kept
+explicitly as QCD axion constraints.
 
 The FCC-ee contours are this project's contribution and are read from the
 projection CSV produced by ``analysis/fccee_projection.py``.
@@ -29,6 +28,7 @@ import matplotlib.patheffects as pe
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib.patches import ConnectionPatch
 
 try:
     from analysis.axionlimits import resolve_axionlimits_root
@@ -37,8 +37,15 @@ except ModuleNotFoundError:
 
 
 DEFAULT_PROJECTION = Path("results") / "fccee" / "fccee_projection.csv"
-DEFAULT_OUTPUT_STEM = Path("results") / "fccee" / "money_plot"
+DEFAULT_OUTPUT_STEM = Path("results") / "fccee" / "money_plot_alp_full"
+DEFAULT_COMBINED_OUTPUT_STEM = Path("results") / "fccee" / "money_plot_alp_full_combined"
 FULL_PARAMETER_SPACE_MARKER = "AxionPhoton_FullParameterSpace"
+MASS_AXIS_LABEL = r"$m_a$ [eV]"
+COUPLING_AXIS_LABEL = r"$g_{a\gamma\gamma}$ [GeV$^{-1}$]"
+CLOSEUP_M_MIN = 1.0e7
+CLOSEUP_M_MAX = 1.0e12
+CLOSEUP_G_MIN = 1.0e-8
+CLOSEUP_G_MAX = 1.0e-1
 REFERENCE_FIGSETUP = (
     "fig,ax = FigSetup(xlab='Axion mass [eV]',ylab='Axion-photon coupling [GeV$^{-1}$]',"
     "m_min=1e-24,m_max=1e12,g_min=1e-20,g_max=1e-1,xtick_rotation=0)"
@@ -106,7 +113,7 @@ def build_axionlimits_base_plot(
 
     source = _full_parameter_space_cell(notebook_path)
     replacement = (
-        "fig,ax = FigSetup(xlab='Axion mass [eV]',ylab='Axion-photon coupling [GeV$^{-1}$]',"
+        "fig,ax = FigSetup(xlab=r'$m_a$ [eV]',ylab=r'$g_{a\\gamma\\gamma}$ [GeV$^{-1}$]',"
         f"m_min={_format_sci(m_min)},m_max={_format_sci(m_max)},"
         f"g_min={_format_sci(g_min)},g_max={_format_sci(g_max)},xtick_rotation=0)"
     )
@@ -128,6 +135,8 @@ def build_axionlimits_base_plot(
         raise RuntimeError("AxionLimits plot cell did not define fig and ax")
     ax.set_xlim(m_min, m_max)  # type: ignore[attr-defined]
     ax.set_ylim(g_min, g_max)  # type: ignore[attr-defined]
+    ax.set_xlabel(MASS_AXIS_LABEL)  # type: ignore[attr-defined]
+    ax.set_ylabel(COUPLING_AXIS_LABEL)  # type: ignore[attr-defined]
     for text in list(ax.texts):  # type: ignore[attr-defined]
         if text.get_transform() != ax.transData:  # type: ignore[attr-defined]
             continue
@@ -146,6 +155,20 @@ def _hide_out_of_view_text(ax: plt.Axes) -> None:
         x, y = text.get_position()
         if not (xmin <= x <= xmax and ymin <= y <= ymax):
             text.set_visible(False)
+
+
+def _relabel_axion_text_as_alp(ax: plt.Axes) -> None:
+    """Use ALP wording on plot labels while preserving QCD axion references."""
+    ax.set_xlabel(MASS_AXIS_LABEL)
+    ax.set_ylabel(COUPLING_AXIS_LABEL)
+    for text in list(ax.texts):
+        value = text.get_text()
+        lower = value.lower()
+        if "qcd axion" in lower:
+            continue
+        value = value.replace("Axion", "ALP")
+        value = value.replace("axion", "ALP")
+        text.set_text(value)
 
 
 def _add_generic_legend(ax: plt.Axes) -> None:
@@ -198,8 +221,8 @@ def build_generic_alp_plot(
         from PlotFuncs import AxionPhoton, FigSetup, line_background
 
         fig, ax = FigSetup(
-            xlab=r"Axion mass [eV]",
-            ylab=r"Axion-photon coupling [GeV$^{-1}$]",
+            xlab=MASS_AXIS_LABEL,
+            ylab=COUPLING_AXIS_LABEL,
             m_min=m_min,
             m_max=m_max,
             g_min=g_min,
@@ -252,6 +275,7 @@ def build_generic_alp_plot(
 
     ax.set_xlim(m_min, m_max)
     ax.set_ylim(g_min, g_max)
+    _relabel_axion_text_as_alp(ax)
     _set_ev_unit_ticks(ax)
     _hide_out_of_view_text(ax)
     _add_generic_legend(ax)
@@ -260,6 +284,77 @@ def build_generic_alp_plot(
 
 def _text_outline(color: str = "white", linewidth: float = 4.5) -> list[pe.AbstractPathEffect]:
     return [pe.withStroke(linewidth=linewidth, foreground=color), pe.Normal()]
+
+
+def _is_fcc_ee_closeup(ax: plt.Axes) -> bool:
+    xmin, xmax = ax.get_xlim()
+    return xmin >= 1.0e6 and xmax <= 1.0e13
+
+
+def _add_manual_label(
+    ax: plt.Axes,
+    text: str,
+    x: float,
+    y: float,
+    *,
+    rotation: float = 0.0,
+    fontsize: float = 12.0,
+    color: str = "black",
+    ha: str = "center",
+    va: str = "center",
+) -> None:
+    xmin, xmax = ax.get_xlim()
+    ymin, ymax = ax.get_ylim()
+    if not (xmin <= x <= xmax and ymin <= y <= ymax):
+        return
+    ax.text(
+        x,
+        y,
+        text,
+        color=color,
+        fontsize=fontsize,
+        rotation=rotation,
+        ha=ha,
+        va=va,
+        clip_on=True,
+        path_effects=_text_outline(linewidth=3.2),
+        zorder=36,
+    )
+
+
+def _add_closeup_constraint_labels(ax: plt.Axes) -> None:
+    """Replace out-of-frame AxionLimits labels with close-up-specific labels."""
+    if not _is_fcc_ee_closeup(ax):
+        return
+
+    duplicate_keys = (
+        "primex",
+        "beam",
+        "opal",
+        "lep",
+        "belle",
+        "besiii",
+        "babar",
+        "atlas",
+        "cms",
+        "lhc",
+    )
+    for text in list(ax.texts):
+        value = text.get_text().lower()
+        if any(key in value for key in duplicate_keys):
+            text.set_visible(False)
+
+    label_color = "black"
+    _add_manual_label(ax, "PrimEx", 2.0e7, 2.0e-4, rotation=-63, fontsize=10.5, color=label_color)
+    _add_manual_label(ax, "Beam dumps", 7.5e7, 3.5e-5, rotation=-56, fontsize=12.0, color=label_color)
+    _add_manual_label(ax, "OPAL", 1.2e8, 3.0e-2, fontsize=12.0, color=label_color)
+    _add_manual_label(ax, "LEP", 4.2e8, 1.5e-2, fontsize=14.0, color=label_color)
+    _add_manual_label(ax, "Belle II", 7.5e8, 1.5e-3, rotation=12, fontsize=11.5, color=label_color)
+    _add_manual_label(ax, "BESIII", 6.5e8, 1.4e-4, fontsize=11.0, color=label_color)
+    _add_manual_label(ax, "BaBar", 3.5e10, 7.0e-3, fontsize=14.0, color=label_color)
+    _add_manual_label(ax, "ATLAS", 6.0e9, 3.2e-5, fontsize=11.0, color=label_color)
+    _add_manual_label(ax, "CMS", 8.0e10, 5.0e-4, fontsize=11.0, color=label_color)
+    _add_manual_label(ax, "LHC", 1.4e11, 2.5e-5, fontsize=11.0, color=label_color)
 
 
 def _finite_channel(df: pd.DataFrame, channel: str) -> pd.DataFrame:
@@ -349,10 +444,9 @@ def _plot_fcc_ee_projection(ax: plt.Axes, projection_path: Path) -> None:
     )
 
 
-def make_plot(
-    axionlimits_dir: Path | None,
+def _build_project_plot(
+    root: Path,
     projection_path: Path,
-    output_stem: Path,
     *,
     constraint_set: str,
     m_min: float,
@@ -360,11 +454,7 @@ def make_plot(
     g_min: float,
     g_max: float,
     show_qcd_band: bool,
-) -> list[Path]:
-    root = resolve_axionlimits_root(axionlimits_dir)
-    projection_path = projection_path.resolve()
-    output_stem = output_stem.resolve()
-
+) -> tuple[plt.Figure, plt.Axes]:
     if constraint_set == "generic":
         fig, ax = build_generic_alp_plot(
             root,
@@ -385,6 +475,37 @@ def make_plot(
     else:
         raise ValueError(f"Unknown constraint set {constraint_set!r}; expected one of {CONSTRAINT_SETS}")
     _plot_fcc_ee_projection(ax, projection_path)
+    _relabel_axion_text_as_alp(ax)
+    _add_closeup_constraint_labels(ax)
+    return fig, ax
+
+
+def make_plot(
+    axionlimits_dir: Path | None,
+    projection_path: Path,
+    output_stem: Path,
+    *,
+    constraint_set: str,
+    m_min: float,
+    m_max: float,
+    g_min: float,
+    g_max: float,
+    show_qcd_band: bool,
+) -> list[Path]:
+    root = resolve_axionlimits_root(axionlimits_dir)
+    projection_path = projection_path.resolve()
+    output_stem = output_stem.resolve()
+
+    fig, _ = _build_project_plot(
+        root,
+        projection_path,
+        constraint_set=constraint_set,
+        m_min=m_min,
+        m_max=m_max,
+        g_min=g_min,
+        g_max=g_max,
+        show_qcd_band=show_qcd_band,
+    )
 
     output_stem.parent.mkdir(parents=True, exist_ok=True)
     outputs = [output_stem.with_suffix(".png"), output_stem.with_suffix(".pdf")]
@@ -394,9 +515,153 @@ def make_plot(
     return outputs
 
 
+def _data_to_image_point(fig: plt.Figure, ax: plt.Axes, x: float, y: float) -> tuple[float, float]:
+    fig.canvas.draw()
+    _, height = fig.canvas.get_width_height()
+    x_pix, y_pix = ax.transData.transform((x, y))
+    return float(x_pix), float(height - y_pix)
+
+
+def _figure_to_rgba(fig: plt.Figure) -> np.ndarray:
+    fig.canvas.draw()
+    width, height = fig.canvas.get_width_height()
+    data = np.frombuffer(fig.canvas.buffer_rgba(), dtype=np.uint8)
+    return data.reshape((height, width, 4)).copy()
+
+
+def _draw_zoom_box(
+    ax: plt.Axes,
+    *,
+    m_min: float,
+    m_max: float,
+    g_min: float,
+    g_max: float,
+) -> None:
+    x = [m_min, m_max, m_max, m_min, m_min]
+    y = [g_min, g_min, g_max, g_max, g_min]
+    ax.plot(x, y, color="0.12", lw=2.0, zorder=35)
+
+
+def make_combined_plot(
+    axionlimits_dir: Path | None,
+    projection_path: Path,
+    output_stem: Path,
+    *,
+    constraint_set: str,
+    m_min: float,
+    m_max: float,
+    g_min: float,
+    g_max: float,
+    closeup_m_min: float,
+    closeup_m_max: float,
+    closeup_g_min: float,
+    closeup_g_max: float,
+    show_qcd_band: bool,
+) -> list[Path]:
+    root = resolve_axionlimits_root(axionlimits_dir)
+    projection_path = projection_path.resolve()
+    output_stem = output_stem.resolve()
+
+    full_fig, full_ax = _build_project_plot(
+        root,
+        projection_path,
+        constraint_set=constraint_set,
+        m_min=m_min,
+        m_max=m_max,
+        g_min=g_min,
+        g_max=g_max,
+        show_qcd_band=show_qcd_band,
+    )
+    full_fig.set_size_inches(10.5, 7.5, forward=True)
+    full_fig.subplots_adjust(left=0.17, right=0.985, bottom=0.18, top=0.92)
+    _draw_zoom_box(
+        full_ax,
+        m_min=closeup_m_min,
+        m_max=closeup_m_max,
+        g_min=closeup_g_min,
+        g_max=closeup_g_max,
+    )
+    full_right_top = _data_to_image_point(full_fig, full_ax, closeup_m_max, closeup_g_max)
+    full_right_bottom = _data_to_image_point(full_fig, full_ax, closeup_m_max, closeup_g_min)
+    full_image = _figure_to_rgba(full_fig)
+
+    zoom_fig, zoom_ax = _build_project_plot(
+        root,
+        projection_path,
+        constraint_set=constraint_set,
+        m_min=closeup_m_min,
+        m_max=closeup_m_max,
+        g_min=closeup_g_min,
+        g_max=closeup_g_max,
+        show_qcd_band=show_qcd_band,
+    )
+    zoom_fig.set_size_inches(8.6, 7.5, forward=True)
+    zoom_fig.subplots_adjust(left=0.18, right=0.985, bottom=0.18, top=0.92)
+    zoom_left_top = _data_to_image_point(zoom_fig, zoom_ax, closeup_m_min, closeup_g_max)
+    zoom_left_bottom = _data_to_image_point(zoom_fig, zoom_ax, closeup_m_min, closeup_g_min)
+    zoom_image = _figure_to_rgba(zoom_fig)
+
+    plt.close(full_fig)
+    plt.close(zoom_fig)
+
+    combined_fig = plt.figure(figsize=(18.0, 7.8), facecolor="white")
+    grid = combined_fig.add_gridspec(
+        1,
+        2,
+        width_ratios=(1.05, 1.0),
+        left=0.02,
+        right=0.985,
+        bottom=0.03,
+        top=0.90,
+        wspace=0.045,
+    )
+    full_panel = combined_fig.add_subplot(grid[0, 0])
+    zoom_panel = combined_fig.add_subplot(grid[0, 1])
+
+    full_panel.imshow(full_image, origin="upper")
+    zoom_panel.imshow(zoom_image, origin="upper")
+    for panel, image, title in (
+        (full_panel, full_image, "Full ALP-photon landscape"),
+        (zoom_panel, zoom_image, "FCC-ee close-up"),
+    ):
+        height, width = image.shape[:2]
+        panel.set_xlim(0, width)
+        panel.set_ylim(height, 0)
+        panel.set_aspect("equal")
+        panel.axis("off")
+        panel.set_title(title, fontsize=15, pad=10)
+
+    for source, target in ((full_right_top, zoom_left_top), (full_right_bottom, zoom_left_bottom)):
+        connector = ConnectionPatch(
+            xyA=source,
+            coordsA=full_panel.transData,
+            xyB=target,
+            coordsB=zoom_panel.transData,
+            color="0.18",
+            lw=1.7,
+            alpha=0.85,
+            clip_on=False,
+            zorder=100,
+        )
+        combined_fig.add_artist(connector)
+
+    combined_fig.suptitle(
+        "ALP-photon constraints with FCC-ee Z-pole projections",
+        fontsize=18,
+        y=0.985,
+    )
+
+    output_stem.parent.mkdir(parents=True, exist_ok=True)
+    outputs = [output_stem.with_suffix(".png"), output_stem.with_suffix(".pdf")]
+    combined_fig.savefig(outputs[0], dpi=300, bbox_inches="tight", facecolor="white")
+    combined_fig.savefig(outputs[1], bbox_inches="tight", facecolor="white")
+    plt.close(combined_fig)
+    return outputs
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Make an AxionLimits-style axion-photon landscape with FCC-ee contours."
+        description="Make an AxionLimits-style ALP-photon landscape with FCC-ee contours."
     )
     parser.add_argument("--axionlimits-dir", type=Path, default=None)
     parser.add_argument("--projection", type=Path, default=DEFAULT_PROJECTION)
@@ -404,23 +669,33 @@ def main() -> None:
     parser.add_argument(
         "--constraint-set",
         choices=CONSTRAINT_SETS,
-        default="generic",
-        help="Use generic ALP constraints by default; 'full' includes DM/cosmology-assuming regions.",
+        default="full",
+        help="Use the full landscape by default, including DM, astro, and cosmology regions.",
     )
     parser.add_argument(
         "--show-qcd-band",
         action="store_true",
         help="Show the QCD axion mass-coupling band as a reference, not a constraint.",
     )
-    parser.add_argument("--m-min", type=float, default=1.0e-12, help="Minimum axion mass in eV.")
-    parser.add_argument("--m-max", type=float, default=1.0e12, help="Maximum axion mass in eV.")
+    parser.add_argument("--m-min", type=float, default=1.0e-12, help="Minimum ALP mass in eV.")
+    parser.add_argument("--m-max", type=float, default=1.0e12, help="Maximum ALP mass in eV.")
     parser.add_argument("--g-min", type=float, default=1.0e-19, help="Minimum photon coupling in GeV^-1.")
     parser.add_argument("--g-max", type=float, default=1.0e-1, help="Maximum photon coupling in GeV^-1.")
+    parser.add_argument("--closeup-m-min", type=float, default=CLOSEUP_M_MIN)
+    parser.add_argument("--closeup-m-max", type=float, default=CLOSEUP_M_MAX)
+    parser.add_argument("--closeup-g-min", type=float, default=CLOSEUP_G_MIN)
+    parser.add_argument("--closeup-g-max", type=float, default=CLOSEUP_G_MAX)
     parser.add_argument(
         "--also-save-as",
         type=Path,
         default=None,
         help="Optional second output stem for png/pdf copies.",
+    )
+    parser.add_argument(
+        "--combined-output-stem",
+        type=Path,
+        default=None,
+        help="Optional output stem for a two-panel full-plus-close-up money plot.",
     )
     args = parser.parse_args()
 
@@ -442,6 +717,25 @@ def main() -> None:
             target = extra_stem.with_suffix(output.suffix)
             shutil.copyfile(output, target)
             outputs.append(target)
+
+    if args.combined_output_stem:
+        outputs.extend(
+            make_combined_plot(
+                args.axionlimits_dir,
+                args.projection,
+                args.combined_output_stem,
+                constraint_set=args.constraint_set,
+                m_min=args.m_min,
+                m_max=args.m_max,
+                g_min=args.g_min,
+                g_max=args.g_max,
+                closeup_m_min=args.closeup_m_min,
+                closeup_m_max=args.closeup_m_max,
+                closeup_g_min=args.closeup_g_min,
+                closeup_g_max=args.closeup_g_max,
+                show_qcd_band=args.show_qcd_band,
+            )
+        )
 
     for output in outputs:
         print(output)

@@ -14,19 +14,14 @@ There are three production modes:
 | Mode | Directory | Purpose |
 |---|---|---|
 | Generic smoke test | `mc/hepmc_smoke_test/` | Proves MG5, Pythia, HepMC, ROOT, and Delphes work on the cluster. |
-| ALP signal | `mc/alp_signal/` | Produces `e+ e- -> gamma a`, decays `a -> gamma gamma`, runs Delphes. |
+| ALP signal | `mc/alp_signal/` | Produces $e^+e^-\to\gamma a$, decays $a\to\gamma\gamma$, runs Delphes. |
 | SM backgrounds | `mc/backgrounds/` | Produces background channels for FCC-ee binned limits. |
 
 ## ALP Parameter Cards
+The physical scan parameters are $m_a$, the ALP mass in GeV, and
+$g_{a\gamma\gamma}$, the photon coupling in $\mathrm{GeV}^{-1}$.
 
-The physical scan parameters are:
-
-```text
-m_a       ALP mass in GeV
-g_agg     photon coupling in GeV^-1
-```
-
-The UFO does not expose `g_agg` directly. Instead, it uses:
+The UFO does not expose $g_{a\gamma\gamma}$ directly. Instead, it uses:
 
 ```text
 fa, KB, KW
@@ -35,11 +30,13 @@ fa, KB, KW
 `mc/make_param_card.py` maps the physical coupling to the UFO-native
 parameters using the Gate-1 production normalization:
 
-```text
-g_agg = alpha_em * (KB + KW) / (sqrt(2) * pi * fa)
-```
+$$
+g_{a\gamma\gamma}=
+\frac{\alpha_{\mathrm{em}}(K_B+K_W)}
+{\sqrt{2}\,\pi f_a}.
+$$
 
-By default, it splits `KB + KW` so that the tree-level `gamma Z alp` coupling
+By default, it splits `KB + KW` so that the tree-level $\gamma Z a$ coupling
 vanishes. That keeps the production aligned with the photophilic process we are
 studying. The script writes:
 
@@ -49,9 +46,10 @@ DECAY 9999 <Gamma_a>
 
 with:
 
-```text
-Gamma(a -> gamma gamma) = g_agg^2 m_a^3 / (64 pi)
-```
+$$
+\Gamma(a\to\gamma\gamma)=
+\frac{g_{a\gamma\gamma}^2 m_a^3}{64\pi}.
+$$
 
 This is the convention used by the analysis and by Pythia.
 
@@ -67,11 +65,11 @@ mc/alp_signal/run_alp_full_pipeline.sh \
 
 The script performs:
 
-1. Generate a param card from `(m_a, g_agg)`.
-2. Run MadGraph for `e+ e- -> alp gamma`.
+1. Generate a param card from $(m_a,g_{a\gamma\gamma})$.
+2. Run MadGraph for $e^+e^-\to a\gamma$.
 3. Parse the physical ALP width from the param card.
 4. Compile the Pythia/HepMC runner.
-5. Run Pythia with ISR/FSR and `alp -> gamma gamma`.
+5. Run Pythia with ISR/FSR and $a\to\gamma\gamma$.
 6. Write a Pythia lifetime summary JSON.
 7. Run Delphes with the selected detector card.
 8. Run `theory/predictions/validate.py` on the point.
@@ -122,8 +120,8 @@ The current FCC-ee backgrounds are:
 
 | Label | Process | Used for |
 |---|---|---|
-| `resolved_3gamma` | `e+ e- -> gamma gamma gamma` | prompt/resolved diphoton mass background |
-| `invisible_gamma_nunu` | `e+ e- -> gamma nu nu~` | recoil-photon invisible background |
+| `resolved_3gamma` | $e^+e^-\to\gamma\gamma\gamma$ | prompt/resolved diphoton mass background |
+| `invisible_gamma_nunu` | $e^+e^-\to\gamma\nu\bar\nu$ | recoil-photon invisible background |
 
 After the ROOT files exist, the analysis layer builds:
 
@@ -159,8 +157,8 @@ mc/delphes_cards/delphes_card_IDEA.tcl
 
 ## Smoke Test
 
-Before ALP production on a new cluster account, run the generic `e+ e- -> mu+
-mu-` smoke test:
+Before ALP production on a new cluster account, run the generic
+$e^+e^-\to\mu^+\mu^-$ smoke test:
 
 ```bash
 cd mc/hepmc_smoke_test

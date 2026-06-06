@@ -7,8 +7,8 @@ The current final channels are:
 
 | Label | Process | Analysis region |
 |---|---|---|
-| `resolved_3gamma` | `e+ e- -> gamma gamma gamma` | prompt/resolved `M_gg` background |
-| `invisible_gamma_nunu` | `e+ e- -> gamma nu nu~` | one-photon invisible recoil background |
+| `resolved_3gamma` | $e^+e^-\to\gamma\gamma\gamma$ | prompt/resolved $M_{\gamma\gamma}$ background |
+| `invisible_gamma_nunu` | $e^+e^-\to\gamma\nu\bar\nu$ | one-photon invisible recoil background |
 
 ## Main Entrypoints
 

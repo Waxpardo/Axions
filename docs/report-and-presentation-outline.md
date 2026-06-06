@@ -24,7 +24,8 @@ Content:
 - Effective operator and free parameters `(m_a, g_agg)`.
 - Why `e+ e- -> gamma a, a -> gamma gamma` is clean.
 - Why FCC-ee Z pole is interesting: high luminosity and mono-energetic recoil photon.
-- Distinction between generic ALP existence constraints and dark-matter-assuming constraints.
+- Existing ALP and QCD axion constraints, including dark-matter, astrophysical,
+  and cosmological regions from AxionLimits.
 
 ### 2. Theory And Kinematics
 
@@ -114,15 +115,16 @@ results/README.md
 results/fccee/fccee_projection.csv
 results/fccee/fccee_projection_summary.json
 results/fccee/fccee_zpole_signature_classification.png
-results/fccee/money_plot_generic_alp.png
-results/fccee/money_plot_generic_alp_closeup.png
+results/fccee/money_plot_alp_full.png
+results/fccee/money_plot_alp_full_closeup.png
+results/fccee/money_plot_alp_full_combined.png
 ```
 
 Content:
 
 - Belle II closure figure.
 - Signature-region classification figure.
-- Full-range generic-ALP money plot.
+- Full-range ALP money plot with DM/astro/cosmology constraints.
 - FCC-ee-relevant close-up plot.
 - Discussion of invisible lower/upper branches.
 - Discussion of prompt/resolved reach.
@@ -168,6 +170,6 @@ Recommended figures:
 ```text
 results/belle2_closure/belle2_closure.png
 results/fccee/fccee_zpole_signature_classification.png
-results/fccee/money_plot_generic_alp_closeup.png
-results/fccee/money_plot_generic_alp.png
+results/fccee/money_plot_alp_full_closeup.png
+results/fccee/money_plot_alp_full.png
 ```

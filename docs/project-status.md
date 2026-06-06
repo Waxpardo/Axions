@@ -19,7 +19,7 @@ This file is a short checklist for collaborators. The detailed methods are in
 | FCC-ee detector-corrected contours | complete | `results/fccee/fccee_projection.csv` |
 | FCC-ee signature classification | complete | `results/fccee/fccee_zpole_signature_classification.csv` |
 | Existing constraints overlay | complete | `analysis/make_axionlimits_style_plot.py` |
-| Final money plots | complete | `results/fccee/money_plot_generic_alp*.png` and `.pdf` |
+| Final money plots | complete | `results/fccee/money_plot_alp_full*.png` and `.pdf` |
 
 ## Current Final Result
 

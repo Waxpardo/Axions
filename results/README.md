@@ -26,10 +26,12 @@ Important files:
 
 Current status:
 
-```text
-passed
-max |log10(g_closure / g_published)| = 7.59e-3
-```
+The closure currently passes with:
+
+$$
+\max\left|\log_{10}\left(\frac{g_{\mathrm{closure}}}{g_{\mathrm{published}}}\right)\right|
+=7.59\times10^{-3}.
+$$
 
 ## FCC-ee Projection
 
@@ -45,12 +47,14 @@ Main files:
 |---|---|
 | `fccee_projection.csv` | Final detector-corrected FCC-ee contour branches. |
 | `fccee_projection_summary.json` | Config, counts, background inclusion, and correction-map summary. |
-| `fccee_zpole_signature_classification.csv` | Classification of the full `(m_a, g_agg)` plane. |
+| `fccee_zpole_signature_classification.csv` | Classification of the full $(m_a,g_{a\gamma\gamma})$ plane. |
 | `fccee_zpole_signature_classification.png` | Signature-region plot. |
-| `money_plot_generic_alp.png` / `.pdf` | Final generic-ALP money plot. |
-| `money_plot_generic_alp_closeup.png` / `.pdf` | FCC-ee-relevant close-up of the generic-ALP money plot. |
+| `money_plot_alp_full.png` / `.pdf` | Final full ALP landscape money plot, including DM/astro/cosmology and QCD axion reference regions. |
+| `money_plot_alp_full_closeup.png` / `.pdf` | FCC-ee-relevant close-up of the full ALP money plot. |
+| `money_plot_alp_full_combined.png` / `.pdf` | Presentation-style two-panel plot linking the full landscape to the FCC-ee close-up. |
 | `money_plot.png` / `.pdf` | Convenience copy of the final money plot. |
 | `money_plot_axionlimits_style.png` / `.pdf` | AxionLimits-style reference view. |
+| `money_plot_generic_alp.png` / `.pdf` | Optional diagnostic view omitting dark-matter/cosmology-assuming regions. |
 
 Input/intermediate files kept because they define the contour:
 

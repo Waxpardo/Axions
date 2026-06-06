@@ -23,17 +23,12 @@ theory/predictions/validate.py --belle2-closure
 
 Key values:
 
-```text
-sqrt_s_GeV = 10.58
-luminosity_pb_inv = 445
-l_min_m = 0.14
-l_max_m = 1.55
-theta_min_deg = 12.4
-theta_max_deg = 155.1
-photon_energy_min_GeV = 0.25
-delta_theta_res_deg = 0.8
-published_curve = limit_data/AxionPhoton/BelleII.txt
-```
+The Belle II closure uses $\sqrt{s}=10.58\,\mathrm{GeV}$,
+$\mathcal{L}=445\,\mathrm{pb}^{-1}$, $L_{\min}=0.14\,\mathrm{m}$,
+$L_{\max}=1.55\,\mathrm{m}$, $\theta_{\min}=12.4^\circ$,
+$\theta_{\max}=155.1^\circ$, $E_\gamma^{\min}=0.25\,\mathrm{GeV}$, and
+$\Delta\theta_{\mathrm{res}}=0.8^\circ$. The public target curve is
+`limit_data/AxionPhoton/BelleII.txt`.
 
 Why these choices are used:
 
@@ -49,12 +44,12 @@ Why these choices are used:
 
 The closure tolerance is set by:
 
-```text
-closure_tolerance_log10 = 0.02
-```
+$$
+\mathrm{closure\_tolerance}_{\log_{10}}=0.02 .
+$$
 
 That means the reconstructed contour must agree with the digitized published
-curve to within about five percent in `g_agg`.
+curve to within about five percent in $g_{a\gamma\gamma}$.
 
 ## FCC-ee Z-Pole Inputs
 
@@ -68,16 +63,11 @@ analysis/fccee_binned_background.py
 
 Core machine and detector settings:
 
-```text
-sqrt_s_GeV = 91.2
-luminosity_ab_inv = 150
-l_min_m = 0.02
-l_max_m = 2.5
-eta_max = 3.0
-photon_energy_min_GeV = 0.5
-photon_efficiency = 0.99
-delta_theta_res_deg = 1.5
-```
+The FCC-ee Z-pole projection uses $\sqrt{s}=91.2\,\mathrm{GeV}$,
+$\mathcal{L}=150\,\mathrm{ab}^{-1}$, $L_{\min}=0.02\,\mathrm{m}$,
+$L_{\max}=2.5\,\mathrm{m}$, $|\eta|_{\max}=3.0$,
+$E_\gamma^{\min}=0.5\,\mathrm{GeV}$, photon efficiency $0.99$, and
+$\Delta\theta_{\mathrm{res}}=1.5^\circ$.
 
 Why these choices are used:
 
@@ -105,12 +95,9 @@ kept as a diagnostic and fallback.
 
 Signal smearing inputs:
 
-```text
-resolved_mass_resolution_relative = 0.05
-resolved_mass_resolution_min_GeV = 0.05
-invisible_recoil_resolution_relative = 0.05
-invisible_recoil_resolution_min_GeV = 0.5
-```
+The resolved mass smearing is
+$\max(0.05\,M_{\gamma\gamma},0.05\,\mathrm{GeV})$. The invisible recoil smearing
+is $\max(0.05\,E_\gamma,0.5\,\mathrm{GeV})$.
 
 The relative term models detector resolution scaling with energy or mass. The
 minimum term avoids unrealistically narrow bins at low mass.

@@ -15,16 +15,16 @@ condor/alp_mass_grid_fccee_z_50.txt
 Do not add a header row to Condor point files; Stoomboot's
 `queue ... from <file>` treats every non-empty row as a job.
 
-That file queues 50 log-spaced ALP masses from `0.01` to `10 GeV` at
-`sqrt(s) = 91.2 GeV`, with `10000` events per mass and a reference coupling
-`g_ref = 1e-4 GeV^-1`.
+That file queues 50 log-spaced ALP masses from $0.01$ to
+$10\,\mathrm{GeV}$ at $\sqrt{s}=91.2\,\mathrm{GeV}$, with `10000` events per
+mass and a reference coupling $g_{\mathrm{ref}}=10^{-4}\,\mathrm{GeV}^{-1}$.
 
 Only one reference coupling is generated because the associated-production
 matrix element has exactly:
 
-```text
-sigma(e+e- -> alp gamma) proportional to g_agg^2
-```
+$$
+\sigma(e^+e^-\to a\gamma)\propto g_{a\gamma\gamma}^2 .
+$$
 
 Downstream scans should rescale the validated reference cross section to the
 full coupling grid. Lifetime and survival probabilities are applied
@@ -65,7 +65,7 @@ Gate 1 cross-section comparison.
 ## Final Detector-Level Signal Production
 
 The production-only scan above is useful for cross-section validation and fast
-analytic rescaling. It does not contain the detector-level `a -> gamma gamma`
+analytic rescaling. It does not contain the detector-level $a\to\gamma\gamma$
 mass reconstruction.
 
 For final signal-production settings use either the example grid or the
@@ -120,10 +120,10 @@ condor/background_points_fccee_z.txt
 
 The current required backgrounds are:
 
-```text
-resolved_3gamma       e+ e- -> gamma gamma gamma
-invisible_gamma_nunu  e+ e- -> gamma nu nu~
-```
+| Label | Process |
+|---|---|
+| `resolved_3gamma` | $e^+e^-\to\gamma\gamma\gamma$ |
+| `invisible_gamma_nunu` | $e^+e^-\to\gamma\nu\bar\nu$ |
 
 After the Delphes ROOT files exist, build the window-yield diagnostic input
 with:
@@ -152,5 +152,5 @@ python3 analysis/fccee_binned_background.py \
 `analysis/fccee_projection.py` refuses to build production contours without a
 background-yield CSV unless `--allow-zero-background` is explicitly passed for a
 smoke-only plot. If `results/fccee/fccee_background_bins.csv` exists, the
-projection uses the binned Asimov Delta chi2 method; otherwise it falls back to
-the window-yield method.
+projection uses the binned Asimov $\Delta\chi^2$ method; otherwise it falls
+back to the window-yield method.
