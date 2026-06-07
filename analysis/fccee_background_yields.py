@@ -28,6 +28,24 @@ import uproot
 FLOAT_RE = r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?"
 
 
+def config_defaults(config_path: Path | None, key_to_dest: dict[str, str]) -> dict[str, Any]:
+    """Translate locked-inputs JSON entries into argparse ``set_defaults`` kwargs.
+
+    This lets standalone background-building scripts track
+    ``analysis/configs/fccee_zpole_inputs.json`` instead of carrying their own
+    hardcoded copies of sqrt(s), luminosity, and window widths that could
+    silently drift from the locked config. Only keys that are present in both
+    the config and ``key_to_dest`` are translated, explicit CLI flags always
+    win (argparse defaults are simply overridden before the final parse), and
+    passing no ``--config`` reproduces the previous hardcoded-default
+    behaviour exactly.
+    """
+    if config_path is None:
+        return {}
+    config = json.loads(Path(config_path).read_text())
+    return {dest: config[key] for key, dest in key_to_dest.items() if key in config}
+
+
 def parse_sigma_pb(path: Path | None, explicit_sigma: float | None) -> float:
     if explicit_sigma is not None:
         return explicit_sigma
@@ -205,6 +223,18 @@ def main() -> None:
     parser.add_argument("--invisible-sigma-pb", type=float, default=None)
     parser.add_argument("--out", type=Path, default=Path("results/fccee/fccee_background_yields.csv"))
     parser.add_argument("--summary-json", type=Path, default=Path("results/fccee/fccee_background_yields_summary.json"))
+    parser.add_argument(
+        "--config",
+        type=Path,
+        default=None,
+        help=(
+            "Optional locked-inputs JSON, e.g. analysis/configs/fccee_zpole_inputs.json. "
+            "When given, sqrt-s, luminosity-ab, and the mass/recoil window widths "
+            "default to the values it contains instead of this script's own "
+            "hardcoded numbers, so the two cannot silently drift apart. Explicit "
+            "CLI flags always take precedence over the config."
+        ),
+    )
     parser.add_argument("--sqrt-s", type=float, default=91.2)
     parser.add_argument("--luminosity-ab", type=float, default=150.0)
     parser.add_argument("--m-min", type=float, default=1.0e-2)
@@ -215,6 +245,24 @@ def main() -> None:
     parser.add_argument("--recoil-window-relative", type=float, default=0.05)
     parser.add_argument("--recoil-window-min", type=float, default=0.5)
     parser.add_argument("--tree", default="Delphes")
+
+    # Two-pass parse: first just to discover --config, then to overlay its
+    # values as argparse defaults (still overridable by explicit CLI flags),
+    # then the real parse.
+    pre_args, _ = parser.parse_known_args()
+    parser.set_defaults(
+        **config_defaults(
+            pre_args.config,
+            {
+                "sqrt_s_GeV": "sqrt_s",
+                "luminosity_ab_inv": "luminosity_ab",
+                "background_mass_window_relative": "mass_window_relative",
+                "background_mass_window_min_GeV": "mass_window_min",
+                "background_recoil_window_relative": "recoil_window_relative",
+                "background_recoil_window_min_GeV": "recoil_window_min",
+            },
+        )
+    )
     args = parser.parse_args()
 
     masses = log_grid(args.m_min, args.m_max, args.n_mass)

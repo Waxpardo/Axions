@@ -22,10 +22,11 @@ belleII_alp/
 *.log
 *.out
 *.err
+*.aux
+*.fdb_latexmk
+*.fls
+*.synctex.gz
 logs/**
-!logs/
-!logs/**/
-!logs/**/.gitkeep
 external/AxionLimits/
 /alp_mass_grid_*.txt
 /alp_production/

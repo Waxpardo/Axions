@@ -1,7 +1,7 @@
 {
   "status": "passed",
   "closure_mode": "calibrated_effective_yield",
-  "target_curve": "/private/tmp/AxionLimits_verify/limit_data/AxionPhoton/BelleII.txt",
+  "target_curve": "external/AxionLimits/limit_data/AxionPhoton/BelleII.txt",
   "target_curve_source": "AxionLimits BelleII.txt, digitized from Belle II PRL 125, 161806",
   "published_boundary_points": 328,
   "closure_points": 300,

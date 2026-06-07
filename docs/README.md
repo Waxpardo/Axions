@@ -10,6 +10,7 @@ runbooks, physics assumptions, validation notes, and references.
 | `final-analysis-rundown.md` | Current end-to-end status, methods, assumptions, commands, and limitations. |
 | `project-status.md` | Short checklist of what is complete and what remains. |
 | `report-and-presentation-outline.md` | Map from repo artifacts to the final report and slide deck. |
+| `repository-build-and-pipeline-report.md` | Full narrative of how the repo was built, why choices were made, branch integration, and full pipeline execution. |
 | `file-provenance-report.md` | File-by-file provenance: authored, generated, imported, downloaded, and derived files. |
 | `detector-assumptions-fccee-zpole.md` | FCC-ee detector and analysis assumptions. |
 | `belle2-closure-test.md` | Belle II public-contour closure details and metrics. |

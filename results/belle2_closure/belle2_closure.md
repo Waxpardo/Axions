@@ -22,7 +22,7 @@ the published result.
 
 ## Inputs
 
-- target curve: `/private/tmp/AxionLimits_verify/limit_data/AxionPhoton/BelleII.txt`
+- target curve: `external/AxionLimits/limit_data/AxionPhoton/BelleII.txt`
 - source: `AxionLimits BelleII.txt, digitized from Belle II PRL 125, 161806`
 - sqrt(s): `10.58 GeV`
 - luminosity: `445.0 pb^-1`

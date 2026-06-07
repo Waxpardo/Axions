@@ -24,9 +24,9 @@ import numpy as np
 import pandas as pd
 
 try:
-    from analysis.fccee_background_yields import load_delphes, parse_sigma_pb, invariant_masses
+    from analysis.fccee_background_yields import config_defaults, load_delphes, parse_sigma_pb, invariant_masses
 except ModuleNotFoundError:
-    from fccee_background_yields import load_delphes, parse_sigma_pb, invariant_masses  # type: ignore
+    from fccee_background_yields import config_defaults, load_delphes, parse_sigma_pb, invariant_masses  # type: ignore
 
 
 def linear_bins(low: float, high: float, n_bins: int) -> np.ndarray:
@@ -141,6 +141,17 @@ def main() -> None:
     parser.add_argument("--invisible-sigma-pb", type=float, default=None)
     parser.add_argument("--out", type=Path, default=Path("results/fccee/fccee_background_bins.csv"))
     parser.add_argument("--summary-json", type=Path, default=Path("results/fccee/fccee_background_bins_summary.json"))
+    parser.add_argument(
+        "--config",
+        type=Path,
+        default=None,
+        help=(
+            "Optional locked-inputs JSON, e.g. analysis/configs/fccee_zpole_inputs.json. "
+            "When given, luminosity-ab and the invisible recoil-histogram range/binning "
+            "default to the values it contains instead of this script's own hardcoded "
+            "numbers. Explicit CLI flags always take precedence over the config."
+        ),
+    )
     parser.add_argument("--luminosity-ab", type=float, default=150.0)
     parser.add_argument("--resolved-low", type=float, default=0.0)
     parser.add_argument("--resolved-high", type=float, default=91.2)
@@ -154,6 +165,20 @@ def main() -> None:
     )
     parser.add_argument("--invisible-bins", type=int, default=264)
     parser.add_argument("--tree", default="Delphes")
+
+    # Two-pass parse: first just to discover --config, then overlay its values
+    # as argparse defaults (still overridable by explicit CLI flags).
+    pre_args, _ = parser.parse_known_args()
+    parser.set_defaults(
+        **config_defaults(
+            pre_args.config,
+            {
+                "luminosity_ab_inv": "luminosity_ab",
+                "invisible_recoil_histogram_high_GeV": "invisible_high",
+                "invisible_recoil_histogram_bins": "invisible_bins",
+            },
+        )
+    )
     args = parser.parse_args()
 
     df = build_binned_background(

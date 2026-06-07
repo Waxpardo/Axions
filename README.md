@@ -25,7 +25,7 @@ The core computational deliverable is in place:
 | FCC-ee detector-corrected projection | complete | `results/fccee/fccee_projection.csv` |
 | Signature classification over the full grid | complete | `results/fccee/fccee_zpole_signature_classification.csv` |
 | Money plots with AxionLimits context | complete | `results/fccee/money_plot*.png` and `.pdf` |
-| Setup/run documentation | complete | `docs/`, plus directory READMEs |
+| Setup/run documentation | complete | `docs/`, selected directory READMEs, and `Makefile` |
 
 The remaining limitations are physics limitations, not missing software pieces: merged and displaced signatures are classified but not turned into exclusion contours, and the FCC-ee projection does not include detector systematics, machine backgrounds, or pileup-like effects.
 ## Physics Conventions
@@ -120,7 +120,9 @@ detector-level signal and background samples.
 └── theory/predictions/    Analytic formulas and validation gates
 ```
 
-Each major directory now has its own README explaining how that layer works.
+Core directories have READMEs where they add useful operational context; short
+nested READMEs were merged upward during cleanup to avoid duplicate
+instructions.
 ## Setup
 For a local Python analysis environment:
 ```bash
@@ -128,6 +130,9 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r env/requirements.txt
 ```
+
+Or let the helper tooling do it for you: `make venv` runs the same three
+commands.
 
 For Nikhef/Stoomboot production, follow:
 ```text
@@ -225,6 +230,33 @@ python analysis/make_axionlimits_style_plot.py \
 The `full` constraint set is the final-report default. The `generic` set remains
 available only as a diagnostic view that omits dark-matter/cosmology-assuming
 regions.
+
+### Running The Pipeline End-to-End
+
+The commands above (and the rest of the from-scratch narrative in
+`docs/repository-build-and-pipeline-report.md` section 9) are also wired up in
+a top-level `Makefile`, so a fresh checkout can be rebuilt without hunting for
+the right invocation order:
+
+```bash
+# `make help` lists every target and explains which ones are
+# "local" (pure Python, run anywhere) versus
+# "MC/cluster" (need MadGraph5_aMC + Pythia8 + Delphes and/or HTCondor on
+# Nikhef/Stoomboot, see condor/README.md).
+make help
+make local-all      # theory-grid + belle2-closure + projection + money-plots
+make status         # show which checked-in deliverables/configs/env are present
+```
+
+The `Makefile` also encodes the FCC-ee projection's bootstrap ordering: the
+Delphes-derived efficiency map and the final corrected projection each consume
+the other's previous output, so `make projection` runs a flat-efficiency
+`projection-bootstrap` pass first only if no `results/fccee/fccee_projection.csv`
+exists yet, then `efficiency-map`, then the final corrected `projection`. See
+the comments at the top of the `Makefile` for the full target map, including
+the guarded MC-production and HTCondor targets that fail with a pointer to
+`env/setup_nikhef_lcg.sh` / `condor/README.md` rather than a raw "command not
+found" when the required stack isn't on `PATH`.
 
 Build the FCC-ee close-up:
 ```bash

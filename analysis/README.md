@@ -32,11 +32,9 @@ AxionLimits checkout
 | `fccee_background_yields.py` | Builds single-window diagnostic background yields. |
 | `fccee_binned_background.py` | Builds binned background histograms used by the final contour. |
 | `fccee_projection.py` | Solves FCC-ee invisible and prompt-resolved projected contours. |
-| `build_signal_efficiency_map.py` | Builds simple detector-selection efficiency maps from ALP signal scans. |
 | `build_full_analysis_efficiency_map.py` | Builds the final branch-aware analysis-bin correction map. |
 | `collect_alp_full_scan.py` | Collects Condor per-point detector-level signal summaries. |
 | `make_axionlimits_style_plot.py` | Builds the final AxionLimits-style money plot with FCC-ee overlays. |
-| `make_plots.py` | Older/simple plotting entrypoint retained for diagnostics. |
 
 ## How The FCC-ee Projection Works
 
@@ -138,6 +136,53 @@ resolved_prompt
 The invisible upper branch has very large correction factors in a low-mass
 tail. That branch is retained, but the report should describe it as
 numerically fragile.
+
+## Locked Configurations
+
+The small JSON files in `analysis/configs/` are the machine-readable source of
+truth for detector and analysis assumptions:
+
+| File | Purpose |
+|---|---|
+| `belle2_closure_inputs.json` | Belle II public-contour closure inputs. |
+| `fccee_zpole_inputs.json` | FCC-ee Z-pole projection inputs. |
+| `axionlimits_source.json` | External AxionLimits provenance and citation metadata. |
+
+The Belle II closure uses $\sqrt{s}=10.58\,\mathrm{GeV}$,
+$\mathcal{L}=445\,\mathrm{pb}^{-1}$, $L_{\min}=0.14\,\mathrm{m}$,
+$L_{\max}=1.55\,\mathrm{m}$, $\theta_{\min}=12.4^\circ$,
+$\theta_{\max}=155.1^\circ$, $E_\gamma^{\min}=0.25\,\mathrm{GeV}$, and
+$\Delta\theta_{\mathrm{res}}=0.8^\circ$. The public target curve is
+`limit_data/AxionPhoton/BelleII.txt` from AxionLimits.
+
+The FCC-ee Z-pole projection uses $\sqrt{s}=91.2\,\mathrm{GeV}$,
+$\mathcal{L}=150\,\mathrm{ab}^{-1}$, $L_{\min}=0.02\,\mathrm{m}$,
+$L_{\max}=2.5\,\mathrm{m}$, $|\eta|_{\max}=3.0$,
+$E_\gamma^{\min}=0.5\,\mathrm{GeV}$, photon efficiency $0.99$, and
+$\Delta\theta_{\mathrm{res}}=1.5^\circ$.
+
+The final projection requires binned backgrounds:
+
+```text
+background_yields_csv = results/fccee/fccee_background_yields.csv
+background_bins_csv = results/fccee/fccee_background_bins.csv
+require_background_for_contours = true
+```
+
+The resolved mass smearing is
+$\max(0.05\,M_{\gamma\gamma},0.05\,\mathrm{GeV})$. The invisible recoil smearing
+is $\max(0.05\,E_\gamma,0.5\,\mathrm{GeV})$.
+
+Detector corrections are enabled by default:
+
+```text
+use_efficiency_corrections = true
+efficiency_corrections_csv = results/fccee/alp_full_analysis_efficiency_map.csv
+efficiency_correction_column = detector_correction_factor
+```
+
+Use `--no-efficiency-corrections` only for a flat-efficiency diagnostic
+comparison.
 
 ## Belle II Closure
 

@@ -10,12 +10,12 @@ ALP scan and the same binned observables used by the FCC-ee projection:
 For each scan point the script computes:
 
 * the Delphes-selected fraction, including lifetime and detector effects;
-* the actual signal-bin fractions from Delphes, not a Gaussian placeholder;
+* the actual signal-bin fractions from Delphes, not a Gaussian approximation;
 * the binned Asimov signal count required against the SM background bins;
 * the expected selected signal count at 150 ab^-1 for the generated coupling.
 
 The resulting CSV is the right object for deciding how to replace or correct
-the flat detector-efficiency placeholder in the projection.
+the flat detector-efficiency approximation in the projection.
 """
 
 from __future__ import annotations

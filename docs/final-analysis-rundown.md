@@ -243,8 +243,6 @@ The completed detector-level signal summaries are:
 ```text
 results/fccee/alp_full_scan_summary.csv
 results/fccee/alp_full_scan_summary.json
-results/fccee/alp_signal_efficiency_map.csv
-results/fccee/alp_signal_efficiency_summary.json
 results/fccee/alp_full_analysis_efficiency_map.csv
 results/fccee/alp_full_analysis_efficiency_summary.json
 ```

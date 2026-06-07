@@ -509,43 +509,273 @@ def build_projection(
     return pd.DataFrame(rows)
 
 
-def plot_classification(df: pd.DataFrame, out: Path) -> None:
-    codes = {
-        "invisible": 0,
-        "merged": 1,
-        "displaced_resolved": 2,
-        "prompt_resolved": 3,
+def plot_classification(
+    df: pd.DataFrame,
+    out: Path,
+    *,
+    config: dict[str, Any],
+    projection_path: Path | None = None,
+) -> None:
+    """Publication-quality ALP signature-region map on the (m_a, g) plane.
+
+    Uses ``pcolormesh`` on the checked-in 180×180 log grid so regions are
+    filled rather than dotted.  Physics boundary curves (L_min, L_max, and
+    the diphoton angular-resolution threshold) are overlaid in white, and
+    FCC-ee projection contours are drawn on top if *projection_path* is
+    given.
+    """
+    import matplotlib as mpl
+    import matplotlib.patheffects as pe
+    from matplotlib.lines import Line2D
+    from matplotlib.patches import Patch
+
+    # ------------------------------------------------------------------ #
+    # Physical constants and detector parameters — read from the same     #
+    # locked config (fccee_zpole_inputs.json) that build_classification   #
+    # used to color the grid, so the overlaid boundary curves and the     #
+    # annotation always match the IDEA-specific geometry actually used    #
+    # (NOT the Belle II values from belle2_closure_inputs.json).          #
+    # ------------------------------------------------------------------ #
+    SQRT_S = float(config["sqrt_s_GeV"])    # GeV
+    HBAR_C = 1.973269804e-16               # GeV·m
+    L_MIN = float(config["l_min_m"])        # m  (prompt/displaced boundary)
+    L_MAX = float(config["l_max_m"])        # m  (displaced/invisible boundary)
+    DTHETA_RES_DEG = float(config["delta_theta_res_deg"])  # deg (resolved/merged boundary)
+    DTHETA_RES = DTHETA_RES_DEG * math.pi / 180  # rad
+
+    # ------------------------------------------------------------------ #
+    # Signature style config: fill colour + legend label                  #
+    # ------------------------------------------------------------------ #
+    # Palette: colorblind-accessible, high-contrast on dark background.
+    # Order determines draw priority (last = on top).
+    SIG_ORDER = ["invisible", "merged", "displaced_resolved", "prompt_resolved"]
+    SIG_CFG: dict[str, tuple[str, str]] = {
+        "prompt_resolved": (
+            "#e63946",  # vivid red
+            r"Prompt resolved  ($\ell_a < L_\mathrm{min}$, $\Delta\theta > \Delta\theta_\mathrm{res}$)",
+        ),
+        "invisible": (
+            "#1d6fce",  # deep blue
+            r"Invisible  ($\ell_a \gg L_\mathrm{max}$)",
+        ),
+        "displaced_resolved": (
+            "#2a9d5c",  # forest green
+            r"Displaced resolved  ($L_\mathrm{min} < \ell_a < L_\mathrm{max}$)",
+        ),
+        "merged": (
+            "#f4a219",  # amber
+            r"Merged  ($\Delta\theta < \Delta\theta_\mathrm{res}$)",
+        ),
     }
-    colors = {
-        0: "#4c78a8",
-        1: "#f58518",
-        2: "#54a24b",
-        3: "#b279a2",
-    }
-    fig, ax = plt.subplots(figsize=(7.2, 5.2), constrained_layout=True)
-    for signature, code in codes.items():
-        group = df[df["signature"] == signature]
-        if group.empty:
-            continue
-        ax.scatter(
-            group["m_a_GeV"],
-            group["g_agg_GeV_inv"],
-            s=4,
-            alpha=0.75,
-            color=colors[code],
-            label=signature.replace("_", " "),
-            rasterized=True,
+
+    # ------------------------------------------------------------------ #
+    # Build the 2-D categorical grid for pcolormesh                       #
+    # ------------------------------------------------------------------ #
+    m_vals = np.sort(df["m_a_GeV"].unique())   # shape (180,)
+    g_vals = np.sort(df["g_agg_GeV_inv"].unique())  # shape (180,)
+
+    code_map = {s: i for i, s in enumerate(SIG_ORDER)}
+    code_grid = np.full((len(g_vals), len(m_vals)), np.nan)
+    m_idx = {v: i for i, v in enumerate(m_vals)}
+    g_idx = {v: i for i, v in enumerate(g_vals)}
+    for _, row in df.iterrows():
+        i_m = m_idx.get(row["m_a_GeV"])
+        i_g = g_idx.get(row["g_agg_GeV_inv"])
+        if i_m is not None and i_g is not None:
+            code_grid[i_g, i_m] = code_map.get(str(row["signature"]), np.nan)
+
+    # Compute bin edges as geometric midpoints of adjacent log-spaced centers.
+    def _log_edges(centers: np.ndarray) -> np.ndarray:
+        lc = np.log10(centers)
+        half = np.diff(lc) / 2
+        return 10 ** np.concatenate([[lc[0] - half[0]], lc[:-1] + half, [lc[-1] + half[-1]]])
+
+    m_edges = _log_edges(m_vals)
+    g_edges = _log_edges(g_vals)
+
+    # Listed colormap from the ordered palette.
+    cmap_colors = [SIG_CFG[s][0] for s in SIG_ORDER]
+    cmap = mpl.colors.ListedColormap(cmap_colors)
+    norm = mpl.colors.BoundaryNorm([-0.5 + i for i in range(len(SIG_ORDER) + 1)], cmap.N)
+
+    # ------------------------------------------------------------------ #
+    # Figure and axes                                                      #
+    # ------------------------------------------------------------------ #
+    with plt.rc_context(
+        {
+            "font.family": "serif",
+            "mathtext.fontset": "dejavuserif",
+            "axes.facecolor": "#0f172a",   # dark navy background
+            "figure.facecolor": "white",
+        }
+    ):
+        fig, ax = plt.subplots(figsize=(9.2, 7.0), constrained_layout=True)
+
+        # Filled regions
+        M, G = np.meshgrid(m_edges, g_edges)
+        ax.pcolormesh(M, G, code_grid, cmap=cmap, norm=norm, rasterized=True, alpha=0.90, zorder=1)
+
+        ax.set_xscale("log")
+        ax.set_yscale("log")
+        ax.set_xlim(m_vals[0] * 0.82, m_vals[-1] * 1.22)
+        ax.set_ylim(g_vals[0] * 0.82, g_vals[-1] * 1.22)
+
+        # ---------------------------------------------------------------- #
+        # Physics boundary curves                                           #
+        # ---------------------------------------------------------------- #
+        s = SQRT_S ** 2
+        m_curve = np.logspace(np.log10(m_vals[0]), np.log10(min(m_vals[-1], SQRT_S * 0.999)), 600)
+        p_a = (s - m_curve ** 2) / (2.0 * SQRT_S)        # ALP momentum [GeV]
+        E_a = (s + m_curve ** 2) / (2.0 * SQRT_S)        # ALP energy  [GeV]
+
+        # ell_a = L  =>  g^2 = 64π p_a ℏc / (m_a^4 L)
+        # (uses Γ_a = g^2 m_a^3 / 64π and ell_a = (p_a/m_a)(ℏc/Γ_a))
+        g_at_lmin = np.sqrt(64.0 * math.pi * p_a * HBAR_C / (m_curve ** 4 * L_MIN))
+        g_at_lmax = np.sqrt(64.0 * math.pi * p_a * HBAR_C / (m_curve ** 4 * L_MAX))
+
+        # Angular resolution boundary:  Δθ_min = 2 m_a / E_a = DTHETA_RES
+        #   => m_a = DTHETA_RES * E_a / 2 = DTHETA_RES * (s + m_a^2) / (4 sqrt_s)
+        #   => 4 sqrt_s m_a - DTHETA_RES m_a^2 = DTHETA_RES s
+        #   Quadratic in m_a; solve for the unique root inside [m_vals[0], SQRT_S).
+        # dtheta_min(m_a) = 2 m_a / E_a is monotonically increasing in m_a for m_a<sqrt_s.
+        dtheta_m_curve = 2.0 * m_curve / E_a
+        m_theta_boundary: float | None = None
+        crossings = np.where(np.diff(np.sign(dtheta_m_curve - DTHETA_RES)))[0]
+        if crossings.size > 0:
+            i0 = crossings[0]
+            m_theta_boundary = float(
+                brentq(
+                    lambda m: 2.0 * m / ((s + m ** 2) / (2.0 * SQRT_S)) - DTHETA_RES,
+                    m_curve[i0],
+                    m_curve[i0 + 1],
+                )
+            )
+
+        ylim = ax.get_ylim()
+        boundary_kw = dict(lw=1.8, alpha=0.82, zorder=6)
+
+        # Clip curves to axes limits before plotting
+        vis = (g_at_lmin >= ylim[0]) & (g_at_lmin <= ylim[1])
+        if vis.any():
+            ax.plot(
+                m_curve[vis], g_at_lmin[vis], color="white", ls="--", **boundary_kw,
+                label=rf"$\ell_a = L_{{\min}} = {L_MIN}\,\mathrm{{m}}$",
+            )
+
+        vis = (g_at_lmax >= ylim[0]) & (g_at_lmax <= ylim[1])
+        if vis.any():
+            ax.plot(
+                m_curve[vis], g_at_lmax[vis], color="white", ls=":", lw=2.2, alpha=0.82, zorder=6,
+                label=rf"$\ell_a = L_{{\max}} = {L_MAX}\,\mathrm{{m}}$",
+            )
+
+        xlim = ax.get_xlim()
+        if m_theta_boundary is not None and xlim[0] <= m_theta_boundary <= xlim[1]:
+            ax.axvline(
+                m_theta_boundary, color="white", ls="-.", lw=1.7, alpha=0.80, zorder=6,
+                label=rf"$\Delta\theta_{{\min}} = {DTHETA_RES_DEG:.1f}^\circ$  (angular resolution)",
+            )
+
+        # ---------------------------------------------------------------- #
+        # FCC-ee projection contours (optional overlay)                    #
+        # ---------------------------------------------------------------- #
+        if projection_path is not None and projection_path.exists():
+            proj = pd.read_csv(projection_path)
+            lower = proj[proj["channel"] == "invisible_lower"].sort_values("m_a_GeV")
+            upper = proj[proj["channel"] == "invisible_upper"].sort_values("m_a_GeV")
+            resolved = proj[proj["channel"] == "resolved_prompt"].sort_values("m_a_GeV")
+            proj_kw = dict(zorder=12, solid_capstyle="round")
+            if not lower.empty and not upper.empty:
+                band = lower.merge(upper, on="m_a_GeV", suffixes=("_l", "_u"))
+                ax.fill_between(
+                    band["m_a_GeV"],
+                    np.clip(band["g_agg_GeV_inv_l"], *ylim),
+                    np.clip(band["g_agg_GeV_inv_u"], *ylim),
+                    color="white", alpha=0.18, zorder=11,
+                )
+                ax.plot(lower["m_a_GeV"], lower["g_agg_GeV_inv"], color="white", lw=2.3, ls="--", **proj_kw)
+                ax.plot(upper["m_a_GeV"], upper["g_agg_GeV_inv"], color="white", lw=1.8, ls=(0, (6, 3)), **proj_kw)
+            if not resolved.empty:
+                ax.plot(
+                    resolved["m_a_GeV"], resolved["g_agg_GeV_inv"],
+                    color="white", lw=2.3, ls="-.", **proj_kw,
+                )
+
+        # ---------------------------------------------------------------- #
+        # Axes decoration                                                   #
+        # ---------------------------------------------------------------- #
+        ax.set_xlabel(r"$m_a$  [GeV]", fontsize=14, labelpad=7)
+        ax.set_ylabel(r"$g_{a\gamma\gamma}$  [GeV$^{-1}$]", fontsize=14, labelpad=7)
+        ax.set_title(
+            "FCC-ee Z-Pole ALP Signal Topology Map\n"
+            r"$e^+e^- \to \gamma a,\ \sqrt{s}=91.2\,\mathrm{GeV},\ 150\,\mathrm{ab}^{-1}$",
+            fontsize=13,
+            pad=10,
+            color="#0f172a",
         )
-    ax.set_xscale("log")
-    ax.set_yscale("log")
-    ax.set_xlabel(r"$m_a$ [GeV]")
-    ax.set_ylabel(r"$g_{a\gamma\gamma}$ [GeV$^{-1}$]")
-    ax.set_title("FCC-ee Z-Pole ALP Signature Regions")
-    ax.grid(True, which="both", alpha=0.16)
-    ax.legend(frameon=False, fontsize=8)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out, dpi=250)
-    plt.close(fig)
+        ax.tick_params(which="both", direction="in", top=True, right=True, labelsize=11, colors="white")
+        for spine in ax.spines.values():
+            spine.set_edgecolor("white")
+            spine.set_linewidth(1.1)
+        ax.xaxis.label.set_color("#0f172a")
+        ax.yaxis.label.set_color("#0f172a")
+        ax.tick_params(axis="both", colors="#0f172a", which="both")
+        ax.spines[:].set_edgecolor("#0f172a")
+        ax.grid(True, which="major", alpha=0.12, lw=0.7, color="white")
+        ax.grid(True, which="minor", alpha=0.05, lw=0.4, color="white")
+
+        # ---------------------------------------------------------------- #
+        # Legend                                                            #
+        # ---------------------------------------------------------------- #
+        sig_handles = [
+            Patch(facecolor=SIG_CFG[s][0], edgecolor="none", alpha=0.9, label=SIG_CFG[s][1])
+            for s in SIG_ORDER
+            if not df[df["signature"] == s].empty
+        ]
+        boundary_handles: list[Line2D] = [
+            Line2D([0], [0], color="#334155", lw=1.8, ls="--",
+                   label=rf"$\ell_a = L_{{\min}} = {L_MIN}\,\mathrm{{m}}$"),
+            Line2D([0], [0], color="#334155", lw=2.2, ls=":",
+                   label=rf"$\ell_a = L_{{\max}} = {L_MAX}\,\mathrm{{m}}$"),
+        ]
+        if m_theta_boundary is not None:
+            boundary_handles.append(
+                Line2D([0], [0], color="#334155", lw=1.7, ls="-.",
+                       label=rf"$\Delta\theta_{{\min}} = {DTHETA_RES_DEG:.1f}^\circ$ (angular res.)")
+            )
+
+        ax.legend(
+            handles=sig_handles + boundary_handles,
+            loc="upper right",
+            frameon=True,
+            framealpha=0.94,
+            facecolor="white",
+            edgecolor="#94a3b8",
+            fontsize=9.4,
+            handlelength=2.2,
+            borderpad=0.9,
+            labelspacing=0.55,
+        )
+
+        # ---------------------------------------------------------------- #
+        # Process label (bottom-left corner)                               #
+        # ---------------------------------------------------------------- #
+        ax.text(
+            0.02, 0.03,
+            "IDEA detector card  |  Delphes simulation\n"
+            r"$L_\mathrm{min}=" + f"{L_MIN}" + r"\,\mathrm{m},\ "
+            r"L_\mathrm{max}=" + f"{L_MAX}" + r"\,\mathrm{m}$",
+            transform=ax.transAxes,
+            ha="left", va="bottom",
+            fontsize=8.5,
+            color="#334155",
+            path_effects=[pe.withStroke(linewidth=2.5, foreground="white", alpha=0.85)],
+            zorder=20,
+        )
+
+        out.parent.mkdir(parents=True, exist_ok=True)
+        fig.savefig(out, dpi=250, bbox_inches="tight", facecolor="white")
+        plt.close(fig)
 
 
 def write_summary(
@@ -647,7 +877,7 @@ def main() -> None:
 
     classification.to_csv(classification_path, index=False)
     projection.to_csv(projection_path, index=False)
-    plot_classification(classification, classification_plot)
+    plot_classification(classification, classification_plot, config=config, projection_path=projection_path)
     write_summary(config, projection, classification, background, background_bins, efficiency_corrections, summary_path)
 
     print(f"Wrote {projection_path}")

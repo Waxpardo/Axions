@@ -20,7 +20,7 @@ import pandas as pd
 
 
 ALPHA = 1 / 137.035999084
-HBAR_C_GEV_M = 1.97326980e-16
+HBAR_C_GEV_M = 1.973269804e-16
 HBAR_GEV_S = 6.582119569e-25
 GEV2_TO_PB = 3.8937937e8
 
@@ -28,8 +28,11 @@ BELLE2_SQRT_S_GEV = 10.58
 FCCEE_Z_SQRT_S_GEV = 91.2
 BELLE2_L_MIN_M = 0.14
 BELLE2_L_MAX_M = 1.55
-FCCEE_L_MIN_M = BELLE2_L_MIN_M
-FCCEE_L_MAX_M = BELLE2_L_MAX_M
+# Locked IDEA baseline values from analysis/configs/fccee_zpole_inputs.json
+# (l_min_m / l_max_m). No longer tied to the Belle II values now that the
+# IDEA detector-length assumptions are locked.
+FCCEE_L_MIN_M = 0.02
+FCCEE_L_MAX_M = 2.5
 
 
 def gamma_a(m_a: float | np.ndarray, g_agg: float | np.ndarray) -> float | np.ndarray:

@@ -59,6 +59,20 @@ results/alp_production/<campaign>/
 logs/alp_production/<campaign>/
 ```
 
+HTCondor does not create the `log =`/`output =`/`error =` directories named in
+a `.sub` file — it requires them to exist at submission time and fails
+otherwise. A fresh clone therefore needs the campaign log directories before
+submission. For the default campaigns, run:
+
+```bash
+mkdir -p logs/alp_production/<campaign> \
+         logs/alp_full_production/<campaign> \
+         logs/backgrounds/<campaign>
+```
+
+Use the campaign names in the relevant point files or submit descriptions, for
+example `fccee_z_50` or `fccee_z_full_projection_fullbg_channelaware`.
+
 Each point writes a `point_summary.csv` and a validation JSON containing the
 Gate 1 cross-section comparison.
 

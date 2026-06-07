@@ -53,8 +53,6 @@ Main files:
 | `money_plot_alp_full_closeup.png` / `.pdf` | FCC-ee-relevant close-up of the full ALP money plot. |
 | `money_plot_alp_full_combined.png` / `.pdf` | Presentation-style two-panel plot linking the full landscape to the FCC-ee close-up. |
 | `money_plot.png` / `.pdf` | Convenience copy of the final money plot. |
-| `money_plot_axionlimits_style.png` / `.pdf` | AxionLimits-style reference view. |
-| `money_plot_generic_alp.png` / `.pdf` | Optional diagnostic view omitting dark-matter/cosmology-assuming regions. |
 
 Input/intermediate files kept because they define the contour:
 

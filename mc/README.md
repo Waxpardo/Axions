@@ -88,6 +88,21 @@ reconstructed photons and checks that the best diphoton pair reconstructs the
 requested ALP mass. For `invisible`, it only requires a recoil photon near the
 two-body recoil energy.
 
+Signal helper files:
+
+| File | Purpose |
+|---|---|
+| `alp_signal/run_alp_full_pipeline.sh` | Full MG5 -> Pythia -> Delphes -> validation chain for one point. |
+| `alp_signal/run_alp_mg5_production.sh` | MadGraph production-only stage. |
+| `alp_signal/run_alp_pythia_delphes.cc` | Pythia8 ALP decay/lifetime and HepMC writer. |
+| `alp_signal/run_alp_gate2_width.sh` | Width-convention diagnostic using MG5 `compute_widths`. |
+| `alp_signal/run_fccee_zpole_smoke.sh` | Small FCC-ee signal smoke helper. |
+
+The production pipeline writes the project width explicitly into the param
+card and passes the same value to Pythia. The diagnostic
+`alp_signal/run_alp_gate2_width.sh` documents the known UFO width-normalization
+difference and is the reproducible Gate-2 check.
+
 ## Signal Output Files
 
 For each full ALP point, the work directory contains:
@@ -122,6 +137,13 @@ The current FCC-ee backgrounds are:
 |---|---|---|
 | `resolved_3gamma` | $e^+e^-\to\gamma\gamma\gamma$ | prompt/resolved diphoton mass background |
 | `invisible_gamma_nunu` | $e^+e^-\to\gamma\nu\bar\nu$ | recoil-photon invisible background |
+
+Background helper files:
+
+| File | Purpose |
+|---|---|
+| `backgrounds/run_sm_background_full_pipeline.sh` | MG5 -> Pythia -> Delphes background chain. |
+| `backgrounds/run_pythia_hepmc.cc` | Pythia8 shower and HepMC writer for background LHE files. |
 
 After the ROOT files exist, the analysis layer builds:
 

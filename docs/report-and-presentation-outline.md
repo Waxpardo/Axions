@@ -32,7 +32,6 @@ Content:
 Use:
 
 ```text
-theory/README.md
 theory/predictions/README.md
 theory/predictions/predict_grid.py
 ```
@@ -52,8 +51,6 @@ Use:
 
 ```text
 mc/README.md
-mc/alp_signal/README.md
-mc/backgrounds/README.md
 condor/README.md
 docs/nikhef-mg5-pythia-hepmc-smoke-test.md
 ```
@@ -92,7 +89,6 @@ Use:
 
 ```text
 analysis/README.md
-analysis/configs/README.md
 docs/detector-assumptions-fccee-zpole.md
 docs/final-analysis-rundown.md
 ```

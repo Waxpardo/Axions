@@ -24,16 +24,17 @@ python theory/predictions/predict_grid.py \
   --out theory/predictions/theory_grid_fccee.csv
 ```
 
-Belle II and FCC-ee detector lengths are independent CLI parameters. The FCC-ee
-defaults are currently set equal to the Belle II values until IDEA values are
-locked:
+Belle II and FCC-ee detector lengths are independent CLI parameters. The IDEA
+values are now locked (matching `analysis/configs/fccee_zpole_inputs.json`:
+`l_min_m: 0.02`, `l_max_m: 2.5`), and the FCC-ee defaults in `predict_grid.py`
+match them:
 
 ```bash
 python theory/predictions/predict_grid.py \
   --belle2-l-min 0.14 \
   --belle2-l-max 1.55 \
-  --fccee-l-min 0.14 \
-  --fccee-l-max 1.55 \
+  --fccee-l-min 0.02 \
+  --fccee-l-max 2.5 \
   --out theory/predictions/theory_grid.csv
 ```
 
@@ -50,8 +51,9 @@ L_max_m
 
 The grid also includes a `detector` label. For the default Belle II and FCC-ee
 Z-pole grid this is `BelleII` and `FCCee_Z`. The FCC-ee detector lengths are
-currently set equal to Belle II values until IDEA values are locked, but they
-can already be changed independently with `--fccee-l-min` and `--fccee-l-max`.
+the locked IDEA values (`0.02`/`2.5` m), independent of the Belle II values
+(`0.14`/`1.55` m), and can still be overridden with `--fccee-l-min` and
+`--fccee-l-max` if needed.
 
 ## Validate one MC point
 
@@ -141,8 +143,12 @@ It passes when the reconstructed contour agrees with the digitized Belle II
 boundary within the tolerance in
 `analysis/configs/belle2_closure_inputs.json`.
 
-Example with the current Belle II smoke-test banner:
+Example with a full ALP pipeline output directory:
 
 ```bash
-python theory/predictions/validate.py belleII_alp_testrun10k
+python theory/predictions/validate.py results/alp_full_pipeline/example_belle2
 ```
+
+Raw full-pipeline output directories are ignored by git; regenerate them with
+`make signal-point-belle2` or the explicit `mc/alp_signal/run_alp_full_pipeline.sh`
+command when you need this detector-level validation locally.
