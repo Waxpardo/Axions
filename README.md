@@ -29,6 +29,28 @@ The core computational deliverable is in place:
 | Setup/run documentation | complete | `docs/`, selected directory READMEs, and `Makefile` |
 
 The remaining limitations are physics limitations, not missing software pieces: merged and displaced signatures are classified but not turned into exclusion contours, and the FCC-ee projection does not include detector systematics, machine backgrounds, or pileup-like effects.
+
+## Current Paper-Draft Result
+
+The current paper draft treats the checked-in FCC-ee Z-pole projection as the
+final detector-corrected result for the one-coupling photophilic benchmark with
+tree-level $C_{\gamma Z}=0$.
+
+| Channel/feature | Current result |
+|---|---|
+| Invisible lower branch | $m_a=0.01$--$0.92\,\mathrm{GeV}$ at $g_{a\gamma\gamma}\simeq5.5$--$7.3\times10^{-7}\,\mathrm{GeV}^{-1}$ |
+| Invisible upper branch | lifetime ceiling from $g_{a\gamma\gamma}\simeq1.3\times10^{-6}$ to $5.5\times10^{-2}\,\mathrm{GeV}^{-1}$; directional rather than precision |
+| Prompt-resolved branch | $m_a=0.61$--$80\,\mathrm{GeV}$ at $g_{a\gamma\gamma}\simeq1.1\times10^{-5}$--$2.9\times10^{-4}\,\mathrm{GeV}^{-1}$ |
+| Resolved threshold | $m_a\simeq\sqrt{s}\,\Delta\theta_\mathrm{res}/4=0.597\,\mathrm{GeV}$ |
+| Signature grid | $180\times180=32{,}400$ points: 14,171 prompt-resolved, 10,452 invisible, 5,989 merged, 1,788 displaced-resolved |
+
+The most robust headline statements are the invisible lower branch, the
+prompt-resolved branch, the resolved threshold near $0.6\,\mathrm{GeV}$, and
+the qualitative separation of invisible, prompt/resolved, merged, and displaced
+regions. The invisible upper branch is retained as the short-lifetime boundary,
+but its low-mass tail has very large Delphes correction factors and should be
+described more cautiously.
+
 ## Physics Conventions
 The project uses the following locked conventions:
 - The metric is mostly-minus, $\epsilon^{0123}=+1$,
@@ -72,7 +94,7 @@ Important numerical values:
 - $|\eta|_{\max}=3.0$, $E_\gamma^{\min}=0.5\,\mathrm{GeV}$,
 - photon efficiency $0.99$,
 - $\Delta\theta_{\mathrm{res}}=1.5^\circ$.
-The resolved mass resolution is $\max(5\%,0.05\,\mathrm{GeV})$, and the invisible recoil resolution is$\max(5\%,0.5\,\mathrm{GeV})$.
+The resolved mass resolution is $\max(5\%,0.05\,\mathrm{GeV})$, and the invisible recoil resolution is $\max(5\%,0.5\,\mathrm{GeV})$.
 
 Why these matter:
 
@@ -216,16 +238,25 @@ python analysis/fccee_projection.py \
   --n-g 180
 ```
 
-Rebuild the full ALP money plot with DM, astrophysical, cosmological, and QCD
-axion reference constraints:
+Rebuild the paper figures that use AxionLimits context. The intro plot is the
+full landscape plus a detector-search close-up, with no FCC-ee projection. The
+money plot is the detector-relevant close-up with the FCC-ee projections:
 ```bash
-python analysis/make_axionlimits_style_plot.py \
+.venv/bin/python analysis/make_axionlimits_style_plot.py \
   --axionlimits-dir external/AxionLimits \
   --projection results/fccee/fccee_projection.csv \
   --constraint-set full \
-  --output-stem results/fccee/money_plot_alp_full \
+  --no-fcc-ee \
+  --output-stem results/fccee/axionlimits_alp_landscape_intro \
+  --combined-output-stem results/fccee/axionlimits_alp_landscape_intro
+
+.venv/bin/python analysis/make_axionlimits_style_plot.py \
+  --axionlimits-dir external/AxionLimits \
+  --projection results/fccee/fccee_projection.csv \
+  --constraint-set full \
+  --output-stem results/fccee/money_plot_alp_full_closeup \
   --also-save-as results/fccee/money_plot \
-  --combined-output-stem results/fccee/money_plot_alp_full_combined
+  --m-min 1e7 --m-max 1e12 --g-min 1e-8 --g-max 1e-1
 ```
 
 The `full` constraint set is the final-report default. The `generic` set remains
@@ -261,7 +292,7 @@ found" when the required stack isn't on `PATH`.
 
 Build the FCC-ee close-up:
 ```bash
-python analysis/make_axionlimits_style_plot.py \
+.venv/bin/python analysis/make_axionlimits_style_plot.py \
   --axionlimits-dir external/AxionLimits \
   --projection results/fccee/fccee_projection.csv \
   --constraint-set full \
@@ -293,8 +324,12 @@ results/fccee/money_plot_alp_full_closeup.png
 results/fccee/money_plot_alp_full_closeup.pdf
 results/fccee/money_plot_alp_full_combined.png
 results/fccee/money_plot_alp_full_combined.pdf
+results/fccee/money_plot.png
+results/fccee/money_plot.pdf
 results/fccee/axionlimits_alp_landscape_intro.png
 results/fccee/axionlimits_alp_landscape_intro.pdf
+results/fccee/background_signal_examples.png
+results/fccee/background_signal_examples.pdf
 ```
 
 ## What The Code Actually Does
@@ -306,7 +341,7 @@ The analysis code is split by responsibility:
 | `theory/predictions/validate.py` | central validation gates and MC-output checks |
 | `mc/make_param_card.py` | maps physical $g_{a\gamma\gamma}$ to UFO-native `fa`, `KB`, `KW` |
 | `analysis/fccee_binned_background.py` | turns Delphes background ROOT files into normalized histograms |
-| `analysis/fccee_projection.py` | solves the binned FCC-ee exclusion contours |
+| `analysis/fccee_projection.py` | solves the binned FCC-ee exclusion contours and writes the signature map |
 | `analysis/build_full_analysis_efficiency_map.py` | converts detector-level signal scans into correction factors |
 | `analysis/make_axionlimits_style_plot.py` | draws existing bounds and overlays FCC-ee projections |
 

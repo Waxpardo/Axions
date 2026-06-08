@@ -103,6 +103,12 @@ card and passes the same value to Pythia. The diagnostic
 `alp_signal/run_alp_gate2_width.sh` documents the known UFO width-normalization
 difference and is the reproducible Gate-2 check.
 
+The completed FCC-ee detector-level signal campaign used by the current paper
+draft is `fccee_z_full_projection_fullbg_channelaware`: 284 projection-derived
+points, all passing Gate 1 and channel-aware detector validation. Its compact
+outputs live in `results/fccee/alp_full_scan_summary.*` and
+`results/fccee/alp_full_analysis_efficiency_*`.
+
 ## Signal Output Files
 
 For each full ALP point, the work directory contains:
@@ -133,10 +139,10 @@ mc/backgrounds/run_sm_background_full_pipeline.sh \
 
 The current FCC-ee backgrounds are:
 
-| Label | Process | Used for |
-|---|---|---|
-| `resolved_3gamma` | $e^+e^-\to\gamma\gamma\gamma$ | prompt/resolved diphoton mass background |
-| `invisible_gamma_nunu` | $e^+e^-\to\gamma\nu\bar\nu$ | recoil-photon invisible background |
+| Label | Process | Used for | Paper-draft sample |
+|---|---|---|---|
+| `resolved_3gamma` | $e^+e^-\to\gamma\gamma\gamma$ | prompt/resolved diphoton mass background | 10,000 events, `sigma = 7.3063 pb`, 23,592 pair entries |
+| `invisible_gamma_nunu` | $e^+e^-\to\gamma\nu\bar\nu$ | recoil-photon invisible background | 10,000 events, `sigma = 134.885 pb`, 2,684 recoil entries |
 
 Background helper files:
 

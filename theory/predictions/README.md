@@ -3,6 +3,9 @@
 This directory holds analytic grids for cross sections, lifetimes, decay
 lengths, recoil photon energies, and photon opening angles.
 
+These formulas are the theory source of truth for the current `paper_draft.tex`
+FCC-ee Z-pole projection and for the Belle II published-contour closure.
+
 ## Build the theory grid
 
 From the repository root:

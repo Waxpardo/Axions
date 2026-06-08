@@ -108,7 +108,17 @@ channel-aware detector validation does not pass. Resolved channels validate the
 ALP diphoton invariant mass; invisible channels validate the recoil photon
 without requiring reconstructed ALP daughter photons.
 
-After the full scan finishes, collect the per-point summaries with:
+The detector-level campaign used by the current paper draft is:
+
+```text
+campaign = fccee_z_full_projection_fullbg_channelaware
+Condor cluster = 4797476
+points = 284
+Gate 1 passed = 284
+channel-aware detector validation passed = 284
+```
+
+After a rerun finishes, collect the per-point summaries with:
 
 ```bash
 python3 analysis/collect_alp_full_scan.py \
@@ -168,3 +178,9 @@ background-yield CSV unless `--allow-zero-background` is explicitly passed for a
 smoke-only plot. If `results/fccee/fccee_background_bins.csv` exists, the
 projection uses the binned Asimov $\Delta\chi^2$ method; otherwise it falls
 back to the window-yield method.
+
+The background campaign used by the current paper draft is Condor cluster
+`4796877`, with 10,000 generated events per channel. It yields 23,592
+resolved diphoton-pair entries for `resolved_3gamma` and 2,684 one-photon
+recoil entries for `invisible_gamma_nunu`, normalized to `2.58e9` and `5.43e9`
+expected entries respectively at `150 ab^-1`.

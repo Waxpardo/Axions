@@ -87,6 +87,35 @@ The prompt-resolved channel is monotonic and writes:
 resolved_prompt
 ```
 
+The checked-in paper-draft contour currently has:
+
+| Branch | Rows | Mass span | Coupling span |
+|---|---:|---:|---:|
+| `invisible_lower` | 91 | `0.01--0.92 GeV` | `5.5e-7--7.3e-7 GeV^-1` |
+| `invisible_upper` | 91 | `0.01--0.92 GeV` | `1.3e-6--5.5e-2 GeV^-1` |
+| `resolved_prompt` | 98 | `0.61--80 GeV` | `1.1e-5--2.9e-4 GeV^-1` |
+
+The invisible lower and prompt-resolved branches are the robust headline
+results. The invisible upper branch is a rapidly varying lifetime ceiling and
+is retained as a directional boundary rather than a precision contour.
+
+## Signature Classification Map
+
+`fccee_projection.py` also builds the full signature map. For every point in
+the `180 x 180` grid it computes `ell_a`, `Delta theta_min`, and the resolved
+flag, then assigns one of four labels:
+
+| Label | Grid points | Fraction | Meaning |
+|---|---:|---:|---|
+| `prompt_resolved` | 14,171 | 43.7% | prompt decay, two resolved ALP photons |
+| `invisible` | 10,452 | 32.3% | ALP survives past `L_max` |
+| `merged` | 5,989 | 18.5% | decays inside detector but photons merge |
+| `displaced_resolved` | 1,788 | 5.5% | resolved diphoton displaced between `L_min` and `L_max` |
+
+The resolved threshold follows from
+`m_a ~= sqrt(s) * Delta theta_res / 4 = 0.597 GeV`; below that value, prompt
+ALP decays are classified as merged rather than prompt-resolved.
+
 ## Binned Background Method
 
 `fccee_binned_background.py` reads Delphes ROOT files and normalizes the
@@ -103,6 +132,13 @@ is all reconstructed diphoton masses in events with at least three photons.
 
 The invisible background is $e^+e^-\to\gamma\nu\bar\nu$; the binned observable is
 the reconstructed recoil photon energy in events with exactly one photon.
+
+The current full-stat background inputs are:
+
+| Channel | Cross section | Generated events | Histogram entries | Expected entries at `150 ab^-1` |
+|---|---:|---:|---:|---:|
+| `resolved_prompt` | `7.3063 pb` | 10,000 | 23,592 diphoton pairs | `2.58e9` |
+| `invisible` | `134.885 pb` | 10,000 | 2,684 recoil photons | `5.43e9` |
 
 `fccee_projection.py` smears the signal into these bins with a Gaussian whose
 width is set by the locked resolution assumptions. It then solves the Asimov
@@ -136,6 +172,14 @@ resolved_prompt
 The invisible upper branch has very large correction factors in a low-mass
 tail. That branch is retained, but the report should describe it as
 numerically fragile.
+
+Current mean detector correction factors:
+
+```text
+invisible_lower: 0.998, range 0.969--1.003
+invisible_upper: 7.8e6 mean, range 0.919--1.49e8
+resolved_prompt: 1.02, range 0.900--2.62
+```
 
 ## Locked Configurations
 
@@ -209,16 +253,25 @@ reimplementation.
 
 ## Final Plot
 
-Use `make_axionlimits_style_plot.py` for the project money plot:
+Use `make_axionlimits_style_plot.py` for the paper intro landscape and the
+project money plot:
 
 ```bash
-python analysis/make_axionlimits_style_plot.py \
+.venv/bin/python analysis/make_axionlimits_style_plot.py \
   --axionlimits-dir external/AxionLimits \
   --projection results/fccee/fccee_projection.csv \
   --constraint-set full \
-  --output-stem results/fccee/money_plot_alp_full \
+  --no-fcc-ee \
+  --output-stem results/fccee/axionlimits_alp_landscape_intro \
+  --combined-output-stem results/fccee/axionlimits_alp_landscape_intro
+
+.venv/bin/python analysis/make_axionlimits_style_plot.py \
+  --axionlimits-dir external/AxionLimits \
+  --projection results/fccee/fccee_projection.csv \
+  --constraint-set full \
+  --output-stem results/fccee/money_plot_alp_full_closeup \
   --also-save-as results/fccee/money_plot \
-  --combined-output-stem results/fccee/money_plot_alp_full_combined
+  --m-min 1e7 --m-max 1e12 --g-min 1e-8 --g-max 1e-1
 ```
 
 The `full` constraint set is the intended final choice. It includes the
