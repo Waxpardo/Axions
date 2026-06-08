@@ -1,0 +1,5 @@
+channel,example_label,m_a_GeV,g_agg_GeV_inv,observable_GeV,template_width_GeV,detector_correction_factor,expected_signal_events,required_signal_events,equivalent_background_events,delta_chi2,excluded_90cl,limit_method
+resolved_prompt,Excluded example,10.21,3e-05,10.21,0.5105000000000001,0.9193061145451271,27252.007633947214,13676.96874353944,69025636.1666992,10.75936364117152,True,binned_delta_chi2_with_3_event_floor
+resolved_prompt,Not excluded example,10.21,1.2e-05,10.21,0.5105000000000001,0.9193061145451271,4360.321221431555,13676.96874353944,69025636.1666992,0.275439709213991,False,binned_delta_chi2_with_3_event_floor
+invisible,Excluded example,0.1,1e-06,45.5999451754386,2.27999725877193,0.9990594642488784,34.8648417710512,10.708094918502155,42.31117962496372,28.728983746018148,True,binned_delta_chi2_with_3_event_floor
+invisible,Not excluded example,0.1,2e-07,45.5999451754386,2.27999725877193,0.9990594642488784,1.3947786859105,10.708094918502155,42.31117962496372,0.04597857114629877,False,binned_delta_chi2_with_3_event_floor

@@ -27,6 +27,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib import patheffects as pe
+from matplotlib.colors import to_rgba
 from matplotlib.patches import ConnectionPatch
 
 try:
@@ -51,17 +53,24 @@ REFERENCE_FIGSETUP = (
 )
 CONSTRAINT_SETS = ("generic", "full")
 
-# FCC-ee projection accent palette. Chosen to read as a distinct "this
-# project's contribution" layer rather than blending into AxionLimits' own
-# red/maroon (collider), green (stellar), and gray (DM) constraint regions --
-# violet and amber sit in visually unused parts of the landscape and pair
-# well together. Labels for these regions are plain white with no outline,
-# matching the constraint-region label styling (see _recolor_constraint_labels_white).
-FCCEE_INVISIBLE_FILL = "#a78bfa"
-FCCEE_INVISIBLE_EDGE = "#6d28d9"
-FCCEE_PROMPT_FILL = "#fdba74"
-FCCEE_PROMPT_EDGE = "#c2410c"
+# FCC-ee projection accent palette. The existing AxionLimits regions are solid
+# red/green/gray/blue blocks, so the project overlays use a colorblind-safe
+# Okabe-Ito blue/orange pair with translucent fills and dashed contours.
+FCCEE_INVISIBLE_FILL = "#56B4E9"
+FCCEE_INVISIBLE_EDGE = "#0072B2"
+FCCEE_PROMPT_FILL = "#E69F00"
+FCCEE_PROMPT_EDGE = "#D55E00"
 FCCEE_LABEL_COLOR = "white"
+LABEL_OUTLINE = [pe.withStroke(linewidth=2.8, foreground="0.12", alpha=0.88)]
+SMALL_LABEL_OUTLINE = [pe.withStroke(linewidth=2.1, foreground="0.12", alpha=0.85)]
+
+# Existing-landscape palette. This deliberately avoids the bright FCC-ee blue
+# and orange projection colors above.
+LANDSCAPE_LAB = "#9E3A53"          # lab, collider, beam dumps
+LANDSCAPE_ASTRO = "#3E8C6B"        # stellar, solar, supernova
+LANDSCAPE_LOWMASS = "#6D5A7E"      # low-mass lab / haloscope-style bounds
+LANDSCAPE_COSMO = "#B7B1A8"        # cosmology / dark-matter / decay regions
+LANDSCAPE_QCD = "#E2B84B"          # QCD axion reference band label/legend
 
 
 @contextmanager
@@ -189,6 +198,43 @@ def _relabel_axion_text_as_alp(ax: plt.Axes) -> None:
         text.set_text(value)
 
 
+def _looks_like(color: np.ndarray, reference: tuple[float, float, float], tol: float = 0.12) -> bool:
+    return bool(np.linalg.norm(color[:3] - np.asarray(reference)) < tol)
+
+
+def _replace_facecolor_family(artist: object, old_rgb: tuple[float, float, float], new_color: str) -> None:
+    if not hasattr(artist, "get_facecolor") or not hasattr(artist, "set_facecolor"):
+        return
+    face = np.asarray(artist.get_facecolor())  # type: ignore[attr-defined]
+    if face.size == 0:
+        return
+    original_shape = face.shape
+    rows = face.reshape(-1, 4).copy()
+    new_rgb = np.asarray(to_rgba(new_color)[:3])
+    changed = False
+    for row in rows:
+        if row[3] > 0.05 and _looks_like(row, old_rgb):
+            row[:3] = new_rgb
+            changed = True
+    if changed:
+        artist.set_facecolor(rows.reshape(original_shape))  # type: ignore[attr-defined]
+
+
+def _apply_landscape_color_scheme(ax: plt.Axes) -> None:
+    """Recolor AxionLimits' native regions to a muted project palette."""
+    # These RGB anchors are the colors used by the AxionLimits notebook cell
+    # before recoloring: seagreen, maroon, royalblue, and mid-gray.
+    replacements = (
+        ((0.180, 0.545, 0.341), LANDSCAPE_ASTRO),
+        ((0.659, 0.196, 0.275), LANDSCAPE_LAB),
+        ((0.255, 0.412, 0.882), LANDSCAPE_LOWMASS),
+        ((0.700, 0.700, 0.700), LANDSCAPE_COSMO),
+    )
+    for artist in list(ax.collections) + list(ax.patches):
+        for old_rgb, new_color in replacements:
+            _replace_facecolor_family(artist, old_rgb, new_color)
+
+
 def _recolor_constraint_labels_white(ax: plt.Axes) -> None:
     """Render AxionLimits' native constraint-region labels in white.
 
@@ -204,9 +250,7 @@ def _recolor_constraint_labels_white(ax: plt.Axes) -> None:
         if text.get_transform() != ax.transData:
             continue
         text.set_color("white")
-        # Plain white, no outline/halo -- a cleaner look than the dark stroke
-        # AxionLimits' own labels would otherwise carry.
-        text.set_path_effects([])
+        text.set_path_effects(LABEL_OUTLINE)
 
 
 def _add_qcd_axion_label(ax: plt.Axes) -> None:
@@ -222,7 +266,7 @@ def _add_qcd_axion_label(ax: plt.Axes) -> None:
         return
     xmin, xmax = ax.get_xlim()
     ymin, ymax = ax.get_ylim()
-    x, y = 4.0e-9, 8.0e-16
+    x, y = 2.5e-7, 7.0e-14
     if not (xmin <= x <= xmax and ymin <= y <= ymax):
         return
     ax.text(
@@ -231,14 +275,41 @@ def _add_qcd_axion_label(ax: plt.Axes) -> None:
         # Kept distinct from the white constraint-region labels: this is a
         # reference band, not an excluded region, and the accent color signals
         # that at a glance. No outline, matching the plot's plain-text style.
-        color="goldenrod",
-        fontsize=15,
+        color=LANDSCAPE_QCD,
+        fontsize=14,
         rotation=43,
         alpha=0.95,
         ha="center",
         va="center",
         clip_on=True,
+        path_effects=SMALL_LABEL_OUTLINE,
         zorder=30,
+    )
+
+
+def _add_landscape_legend(ax: plt.Axes) -> None:
+    """Legend for the intro landscape plot without FCC-ee overlays."""
+    from matplotlib.patches import Patch
+
+    handles = [
+        Patch(facecolor=LANDSCAPE_LAB, edgecolor="0.15", label="Laboratory, collider, beam-dump bounds"),
+        Patch(facecolor=LANDSCAPE_ASTRO, edgecolor="0.15", label="Stellar, solar, and supernova bounds"),
+        Patch(facecolor=LANDSCAPE_LOWMASS, edgecolor="0.15", label="Low-mass laboratory searches"),
+        Patch(facecolor=LANDSCAPE_COSMO, edgecolor="0.15", label="Cosmology / dark-matter / decay regions"),
+        Patch(facecolor=LANDSCAPE_QCD, edgecolor="0.15", alpha=0.65, label="QCD axion reference band"),
+    ]
+    ax.legend(
+        handles=handles,
+        loc="lower left",
+        bbox_to_anchor=(0.018, 0.018),
+        fontsize=10,
+        frameon=True,
+        framealpha=0.94,
+        facecolor="white",
+        edgecolor="0.30",
+        handlelength=1.7,
+        borderpad=0.65,
+        labelspacing=0.35,
     )
 
 
@@ -261,14 +332,14 @@ def _add_fcc_ee_legend(ax: plt.Axes) -> None:
         handles=handles,
         loc="lower left",
         bbox_to_anchor=(0.01, 0.01),
-        fontsize=11,
+        fontsize=10,
         frameon=True,
         framealpha=0.92,
         facecolor="white",
         edgecolor="0.30",
-        handlelength=2.4,
-        borderpad=0.8,
-        labelspacing=0.45,
+        handlelength=2.2,
+        borderpad=0.65,
+        labelspacing=0.35,
     )
 
 
@@ -277,8 +348,8 @@ def _add_generic_legend(ax: plt.Axes) -> None:
     from matplotlib.patches import Patch
 
     handles = [
-        Patch(facecolor="#a83246", edgecolor="black", label="Existing lab / collider / beam dumps"),
-        Patch(facecolor="seagreen", edgecolor="black", label="Existing stellar / helioscope / source bounds"),
+        Patch(facecolor=LANDSCAPE_LAB, edgecolor="black", label="Existing lab / collider / beam dumps"),
+        Patch(facecolor=LANDSCAPE_ASTRO, edgecolor="black", label="Existing stellar / helioscope / source bounds"),
         Line2D([0], [0], color=FCCEE_INVISIBLE_EDGE, lw=3.0, ls="--", label="FCC-ee invisible projection"),
         Line2D([0], [0], color=FCCEE_PROMPT_EDGE, lw=3.0, ls="--", label="FCC-ee prompt/resolved projection"),
     ]
@@ -367,7 +438,7 @@ def build_generic_alp_plot(
         AxionPhoton.StellarBounds(ax, text_on=True)
         AxionPhoton.LowMassAstroBounds(ax, text_on=False, edgealpha=0.9, lw=0.75)
 
-        ax.text(
+    ax.text(
             2.0e5,
             1.5e-17,
             "DM-abundance and cosmology-assuming regions omitted",
@@ -416,7 +487,7 @@ def _add_manual_label(
         ha=ha,
         va=va,
         clip_on=True,
-        path_effects=[],
+        path_effects=SMALL_LABEL_OUTLINE,
         zorder=36,
     )
 
@@ -456,6 +527,44 @@ def _add_closeup_constraint_labels(ax: plt.Axes) -> None:
     _add_manual_label(ax, "LHC", 1.4e11, 2.5e-5, fontsize=11.0, color=label_color)
 
 
+def _simplify_full_landscape_labels(ax: plt.Axes) -> None:
+    """Reduce clutter inside the full-panel collider corner.
+
+    The combined money plot already gives this region its own zoom panel. In
+    the full panel we keep a category-level label and hide the individual
+    collider/beam-dump labels that become unreadable at full-landscape scale.
+    """
+    if _is_fcc_ee_closeup(ax):
+        return
+
+    crowded_keys = (
+        "primex",
+        "beam",
+        "opal",
+        "lep",
+        "belle",
+        "besiii",
+        "babar",
+        "atlas",
+        "cms",
+        "lhc",
+        "miniboone",
+    )
+    for text in list(ax.texts):
+        value = text.get_text().lower()
+        if any(key in value for key in crowded_keys):
+            text.set_visible(False)
+
+    _add_manual_label(
+        ax,
+        "Collider and\nbeam-dump bounds",
+        2.5e8,
+        2.8e-2,
+        fontsize=8.6,
+        color="white",
+    )
+
+
 def _finite_channel(df: pd.DataFrame, channel: str) -> pd.DataFrame:
     out = df.loc[df["channel"] == channel, ["m_a_GeV", "g_agg_GeV_inv"]].copy()
     out = out.replace([np.inf, -np.inf], np.nan).dropna()
@@ -480,6 +589,7 @@ def _plot_fcc_ee_projection(ax: plt.Axes, projection_path: Path) -> None:
 
     ymin, ymax = ax.get_ylim()
     xmin, xmax = ax.get_xlim()
+    is_closeup = _is_fcc_ee_closeup(ax)
 
     def _label_anchor(x_ev: np.ndarray, frac: float) -> int:
         """Index of the visible-range data point closest to the given fraction.
@@ -512,23 +622,24 @@ def _plot_fcc_ee_projection(ax: plt.Axes, projection_path: Path) -> None:
         # Upper (short-lifetime) contour: lighter dash-dot
         ax.plot(x_ev, y_high, color=FCCEE_INVISIBLE_EDGE, lw=2.2, ls=(0, (6, 2)), solid_capstyle="round", zorder=22)
 
-        # Label -- anchored to a band point inside the visible x-range, at the
-        # log-midpoint between the lower/upper contours so it sits centered in
-        # the shaded band rather than at a fixed data coordinate that may fall
-        # outside the band (or under other labels) once the view changes.
-        i = _label_anchor(x_ev, 0.32)
+        i = _label_anchor(x_ev, 0.32 if is_closeup else 0.55)
         lo, hi = max(y_low[i], ymin), max(y_high[i], ymin)
         if hi > lo:
+            label_x = x_ev[i]
             label_y = float(np.sqrt(lo * hi))
-            ax.text(
-                x_ev[i], label_y,
-                "FCC-ee\ninvisible",
-                color=FCCEE_LABEL_COLOR,
-                fontsize=14,
-                fontweight="bold",
-                ha="center", va="center",
-                zorder=25,
-            )
+            if is_closeup:
+                label_x = 2.4e7
+                label_y = 2.0e-6
+                ax.text(
+                    label_x, label_y,
+                    "FCC-ee\ninvisible",
+                    color=FCCEE_LABEL_COLOR,
+                    fontsize=14,
+                    fontweight="bold",
+                    ha="center", va="center",
+                    path_effects=LABEL_OUTLINE,
+                    zorder=25,
+                )
 
     resolved = _finite_channel(df, "resolved_prompt")
     if not resolved.empty:
@@ -541,36 +652,21 @@ def _plot_fcc_ee_projection(ax: plt.Axes, projection_path: Path) -> None:
         )
         ax.plot(x_ev, y, color=FCCEE_PROMPT_EDGE, lw=3.6, ls="--", solid_capstyle="round", zorder=23)
 
-        # Label -- anchored inside the visible curve segment, a log-offset
-        # above the contour. This segment sits in a densely packed corner of
-        # the full landscape: AxionLimits' own collider-bound labels (CMS,
-        # ATLAS, BESIII, LHC, Beam dump, PrimEX, LEP, Belle-II) all cluster
-        # within the same mass decade, and a simple "anchor on curve, offset
-        # upward" placement cannot dodge all of them at once -- there is no
-        # fully clear spot directly above this stretch of curve. (The
-        # close-up panel exists precisely to give this region an uncluttered
-        # presentation; there `_add_closeup_constraint_labels` swaps in clean
-        # replacement labels and this position is collision-free.)
-        #
-        # frac=0.74 / 5x-above-contour was chosen by rendering both views,
-        # reading back every nearby ax.texts bounding box, and directly
-        # minimizing total pixel-area overlap across both simultaneously --
-        # this is the global minimum over the (anchor, offset) grid: it
-        # touches only the edges of BESIII/CMS/ATLAS (far less overlap than
-        # any other reachable position) in the full view, and is fully clear
-        # in the close-up.
-        i = _label_anchor(x_ev, 0.74)
+        i = _label_anchor(x_ev, 0.74 if is_closeup else 0.86)
         contour_y = max(y[i], ymin)
-        label_y = float(np.clip(contour_y * 5.0, contour_y * 3.0, ymax * 0.25))
-        ax.text(
-            x_ev[i], label_y,
-            "FCC-ee\nprompt/resolved",
-            color=FCCEE_LABEL_COLOR,
-            fontsize=13,
-            fontweight="bold",
-            ha="center", va="center",
-            zorder=25,
-        )
+        if is_closeup:
+            label_x = x_ev[i]
+            label_y = float(np.clip(contour_y * 5.0, contour_y * 3.0, ymax * 0.25))
+            ax.text(
+                label_x, label_y,
+                "FCC-ee\nprompt/resolved",
+                color=FCCEE_LABEL_COLOR,
+                fontsize=13,
+                fontweight="bold",
+                ha="center", va="center",
+                path_effects=LABEL_OUTLINE,
+                zorder=25,
+            )
 
 
 def _build_project_plot(
@@ -583,6 +679,7 @@ def _build_project_plot(
     g_min: float,
     g_max: float,
     show_qcd_band: bool,
+    include_fcc_ee: bool = True,
 ) -> tuple[plt.Figure, plt.Axes]:
     if constraint_set == "generic":
         fig, ax = build_generic_alp_plot(
@@ -606,15 +703,21 @@ def _build_project_plot(
     # Recolor AxionLimits' native constraint labels to white (matching the
     # canonical AxionLimits look) before adding any of this project's own
     # overlay text, which manages its own colors.
+    _apply_landscape_color_scheme(ax)
     _recolor_constraint_labels_white(ax)
+    if include_fcc_ee:
+        _simplify_full_landscape_labels(ax)
     _add_qcd_axion_label(ax)
-    _plot_fcc_ee_projection(ax, projection_path)
+    if include_fcc_ee:
+        _plot_fcc_ee_projection(ax, projection_path)
     _relabel_axion_text_as_alp(ax)
     _add_closeup_constraint_labels(ax)
     # Add a dedicated FCC-ee legend only for the full AxionLimits landscape
     # (generic mode has a combined legend already included in build_generic_alp_plot).
-    if constraint_set == "full":
+    if include_fcc_ee and constraint_set == "full":
         _add_fcc_ee_legend(ax)
+    if not include_fcc_ee and constraint_set == "full":
+        _add_landscape_legend(ax)
     return fig, ax
 
 
@@ -629,6 +732,7 @@ def make_plot(
     g_min: float,
     g_max: float,
     show_qcd_band: bool,
+    include_fcc_ee: bool = True,
 ) -> list[Path]:
     root = resolve_axionlimits_root(axionlimits_dir)
     projection_path = projection_path.resolve()
@@ -643,6 +747,7 @@ def make_plot(
         g_min=g_min,
         g_max=g_max,
         show_qcd_band=show_qcd_band,
+        include_fcc_ee=include_fcc_ee,
     )
 
     output_stem.parent.mkdir(parents=True, exist_ok=True)
@@ -695,6 +800,7 @@ def make_combined_plot(
     closeup_g_min: float,
     closeup_g_max: float,
     show_qcd_band: bool,
+    include_fcc_ee: bool = True,
 ) -> list[Path]:
     root = resolve_axionlimits_root(axionlimits_dir)
     projection_path = projection_path.resolve()
@@ -709,6 +815,7 @@ def make_combined_plot(
         g_min=g_min,
         g_max=g_max,
         show_qcd_band=show_qcd_band,
+        include_fcc_ee=include_fcc_ee,
     )
     full_fig.set_size_inches(10.5, 7.5, forward=True)
     full_fig.subplots_adjust(left=0.17, right=0.985, bottom=0.18, top=0.92)
@@ -732,6 +839,7 @@ def make_combined_plot(
         g_min=closeup_g_min,
         g_max=closeup_g_max,
         show_qcd_band=show_qcd_band,
+        include_fcc_ee=include_fcc_ee,
     )
     zoom_fig.set_size_inches(8.6, 7.5, forward=True)
     zoom_fig.subplots_adjust(left=0.18, right=0.985, bottom=0.18, top=0.92)
@@ -784,7 +892,9 @@ def make_combined_plot(
         combined_fig.add_artist(connector)
 
     combined_fig.suptitle(
-        "ALP-photon constraints with FCC-ee Z-pole projections",
+        "ALP-photon constraints with FCC-ee Z-pole projections"
+        if include_fcc_ee
+        else "ALP-photon constraint landscape",
         fontsize=18,
         y=0.985,
     )
@@ -814,6 +924,11 @@ def main() -> None:
         "--show-qcd-band",
         action="store_true",
         help="Show the QCD axion mass-coupling band as a reference, not a constraint.",
+    )
+    parser.add_argument(
+        "--no-fcc-ee",
+        action="store_true",
+        help="Draw only the AxionLimits constraint landscape, without FCC-ee projections or legend.",
     )
     parser.add_argument("--m-min", type=float, default=1.0e-12, help="Minimum ALP mass in eV.")
     parser.add_argument("--m-max", type=float, default=1.0e12, help="Maximum ALP mass in eV.")
@@ -847,6 +962,7 @@ def main() -> None:
         g_min=args.g_min,
         g_max=args.g_max,
         show_qcd_band=args.show_qcd_band,
+        include_fcc_ee=not args.no_fcc_ee,
     )
     if args.also_save_as:
         extra_stem = args.also_save_as.resolve()
@@ -872,6 +988,7 @@ def main() -> None:
                 closeup_g_min=args.closeup_g_min,
                 closeup_g_max=args.closeup_g_max,
                 show_qcd_band=args.show_qcd_band,
+                include_fcc_ee=not args.no_fcc_ee,
             )
         )
 

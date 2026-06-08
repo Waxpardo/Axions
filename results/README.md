@@ -53,6 +53,9 @@ Main files:
 | `money_plot_alp_full_closeup.png` / `.pdf` | FCC-ee-relevant close-up of the full ALP money plot. |
 | `money_plot_alp_full_combined.png` / `.pdf` | Presentation-style two-panel plot linking the full landscape to the FCC-ee close-up. |
 | `money_plot.png` / `.pdf` | Convenience copy of the final money plot. |
+| `axionlimits_alp_landscape_intro.png` / `.pdf` | Matching AxionLimits-only landscape for the paper introduction, without FCC-ee overlays. |
+| `background_signal_examples.png` / `.pdf` | Paper figure showing binned SM backgrounds with excluded/non-excluded ALP signal templates. |
+| `background_signal_examples_summary.csv` | Numerical values for the signal examples in the background-template figure. |
 
 Input/intermediate files kept because they define the contour:
 
@@ -90,6 +93,7 @@ If all raw ROOT files exist, rebuild in this order:
 3. `analysis/collect_alp_full_scan.py`
 4. `analysis/build_full_analysis_efficiency_map.py`
 5. `analysis/fccee_projection.py`
-6. `analysis/make_axionlimits_style_plot.py`
+6. `analysis/plot_background_signal_examples.py`
+7. `analysis/make_axionlimits_style_plot.py`
 
 The final plot should be rebuilt after the projection CSV changes.

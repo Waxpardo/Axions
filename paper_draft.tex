@@ -116,6 +116,18 @@ the most stringent direct constraints come from $e^+e^-$ collider experiments
 regions of parameter space unexplored at couplings
 $\gagg \lesssim 10^{-4}\GeV^{-1}$.
 
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{results/fccee/axionlimits_alp_landscape_intro.png}
+    \caption{Current ALP-photon constraint landscape used as context for this
+    project, produced from the pinned AxionLimits repository. Solid coloured
+    regions show existing laboratory, astrophysical, cosmological, and
+    dark-matter-motivated constraints or reference regions. The FCC-ee
+    projections are deliberately omitted here and are introduced later as the
+    project result.}
+    \label{fig:intro_landscape}
+\end{figure}
+
 The Future Circular Collider (FCC-ee) is a proposed $e^+e^-$ machine
 that would operate at several centre-of-mass energies from the Z pole
 ($\sqrts \approx 91.2\GeV$) up to the $t\bar{t}$ threshold~\cite{FCCee_CDR,FCC_Physics}.
@@ -149,6 +161,21 @@ The analysis uses a complete simulation chain from matrix-element
 generation to fast detector response, validated against published experimental
 results.
 
+A central goal of the project is not only to draw an ALP sensitivity curve,
+but to build a reusable ALP simulation and analysis pipeline.
+This matters because an ALP search is not determined by the production formula
+alone. The same point in the $(m_a,\gagg)$ plane can look like missing energy,
+three photons, two merged photon clusters, or a displaced decay depending on
+the ALP lifetime and boost. The detector response then decides how many of
+those ideal events are actually reconstructed, while Standard Model processes
+decide how difficult the signal is to distinguish from ordinary events.
+A pipeline that connects theory, event generation, detector simulation,
+background modelling, and limit setting is therefore needed if the final
+projection is to mean more than an idealised rate estimate. It also makes the
+analysis extensible: the same structure can later be reused for other FCC-ee
+energies, different detector assumptions, displaced or merged channels, or
+additional ALP operators.
+
 \paragraph{Paper structure.}
 Section~\ref{sec:theory} reviews the relevant ALP physics.
 Section~\ref{sec:simulation} describes the simulation and detector modelling.
@@ -167,7 +194,9 @@ This analysis assumes a single effective operator,
 Eq.~\eqref{eq:lagrangian}, with all direct ALP couplings to fermions, gluons,
 $W$ bosons, and $Z$ bosons set to zero at tree level. The only model
 parameters scanned are therefore the ALP mass $\ma$ and the photon coupling
-$\gagg$. In this benchmark the total width is taken to be
+$\gagg$. To calculate any process we need to compute the amplitude of the
+interaction. This is derived from the Lagrangian of the interaction
+\eqref{eq:lagrangian}. In this benchmark the total width is taken to be
 \begin{equation}
     \Gamma_\mathrm{tot} \simeq \Gamma(a\to\gamma\gamma),
     \label{eq:width_assumption}
@@ -213,7 +242,7 @@ ALP decay. Using
     \qquad
     \epsilon^{0123}=+1,
 \end{equation}
-the interaction term gives the two-photon vertex
+the interaction term gives the two photon vertex
 \begin{equation}
     V^{\mu\nu}(k_1,k_2)
     =
@@ -221,24 +250,57 @@ the interaction term gives the two-photon vertex
     \epsilon^{\mu\nu\alpha\beta}k_{1\alpha}k_{2\beta},
     \label{eq:vertex}
 \end{equation}
-where both photon momenta are taken incoming to the vertex. Here
-$F_{\mu\nu}$ is the electromagnetic field-strength tensor, while
+where both photon four-momenta, $k_1$ and $k_2$, are taken incoming to the
+vertex. Here $F_{\mu\nu}$ is the electromagnetic field-strength tensor, while
 $\tilde F^{\mu\nu}$ is its dual. The object
-$\epsilon^{\mu\nu\rho\sigma}$ is the four-dimensional Levi-Civita symbol:
-it is completely antisymmetric, equals $+1$ for the ordered indices
-$(0,1,2,3)$, changes sign whenever two indices are exchanged, and vanishes
-whenever two indices are the same. Its appearance encodes the pseudoscalar,
-CP-odd nature of the ALP--photon interaction. The Greek indices
-$\mu,\nu,\alpha,\beta$ are Lorentz indices, and repeated indices are summed
-over according to the Einstein convention. The vectors $k_1$ and $k_2$ are
-the four-momenta of the two photon legs attached to the vertex. In production
-one of those photon legs is the off-shell $\gamma^\ast(q)$ and the other is the
-real recoil photon $\gamma(k)$.
+$\epsilon^{\mu\nu\rho\sigma}$ is the four-dimensional Levi-Civita symbol. It is
+a completely antisymmetric object which encodes the CP-odd nature of the
+ALP--photon interaction. It equals $+1$ for the ordered indices $(0,1,2,3)$,
+changes sign whenever two indices are exchanged, and vanishes whenever two
+indices are the same. The Greek indices $\mu,\nu,\alpha,\beta$ are Lorentz
+indices, and repeated indices are summed over according to the Einstein
+convention. In production, one of these photon legs is the off-shell
+$\gamma^\ast(q)$, and the other is the recoil photon
+$\gamma_\mathrm{recoil}(k)$.
 
-The Born-level amplitude for Eq.~\eqref{eq:production} is
+There is one sign that is easy to miss when using this vertex in production.
+Equation~\eqref{eq:vertex} is written with both photon momenta incoming to the
+ALP vertex. In the physical process $e^+e^-\to a\gamma$, however, the recoil
+photon is outgoing. Therefore the momentum that must be inserted into the
+all-incoming Feynman rule is $-k$, not $k$. If the virtual photon carries
+incoming momentum $q$ and Lorentz index $\nu$, while the outgoing recoil photon
+has momentum $k$ and Lorentz index $\rho$, then
 \begin{equation}
-    \mathcal{M}
+    V^{\nu\rho}(q,-k)
     =
+    -i\gagg\epsilon^{\nu\rho\alpha\beta}q_\alpha(-k)_\beta
+    =
+    i\gagg\epsilon^{\nu\rho\alpha\beta}q_\alpha k_\beta .
+    \label{eq:prod_vertex_sign}
+\end{equation}
+This is why the production amplitude contains
+$ig_{a\gamma \gamma}\epsilon^{\nu \rho\alpha \beta}q_{\alpha}k_{\beta}$
+instead of the original all-incoming
+$-ig_{a\gamma\gamma}\epsilon^{\mu\nu\alpha\beta}k_{1,\alpha}k_{2,\beta}$.
+The remaining overall phase is convention-dependent and drops out of
+$|\mathcal{M}|^2$.
+
+The amplitude for $e^+e^-\to a\gamma$ is therefore obtained by multiplying the
+ordinary QED current, the virtual-photon propagator, the ALP--photon vertex,
+and the polarization vector of the outgoing photon:
+\begin{align}
+    \mathcal{M}
+    &=
+    \underbrace{\bar{v}(p_{e^+})(-ie\gamma^{\mu})u(p_{e^-})}
+        _{\substack{e^+e^-\gamma^\ast\\ \mathrm{current}}}
+    \underbrace{\left(\frac{-ig_{\mu \nu}}{s}\right)}
+        _{\substack{\gamma^\ast\\ \mathrm{propagator}}}
+    \underbrace{\left(ig_{a\gamma \gamma}\epsilon^{\nu \rho\alpha \beta}q_{\alpha}k_{\beta}\right)}
+        _{\substack{\gamma^\ast\gamma a\\ \mathrm{vertex}}}
+    \underbrace{\varepsilon ^{*}_{\rho}(k)}
+        _{\substack{\mathrm{outgoing}\ \gamma\\ \mathrm{polarization}}}
+    \nonumber\\
+    &=
     \frac{e\gagg}{s}
     \left[
       \bar v(p_{e^+})\gamma^\mu u(p_{e^-})
@@ -247,7 +309,9 @@ The Born-level amplitude for Eq.~\eqref{eq:production} is
     q^\alpha k^\beta
     \varepsilon^{*\nu}(k).
     \label{eq:prod_amp}
-\end{equation}
+\end{align}
+In the second line the Lorentz indices have been contracted and the overall
+phase has been dropped, since only $|\mathcal{M}|^2$ enters the cross section.
 The factors in this expression have direct diagrammatic meanings. The electric
 charge $e$ comes from the ordinary QED vertex where the electron--positron pair
 annihilates into a virtual photon. The spinors $u(p_{e^-})$ and
@@ -630,10 +694,126 @@ contours in the present study.
 \section{Simulation and Detector Modelling}
 \label{sec:simulation}
 
+\subsection{From formulas to a collider search}
+
+The simplest way to understand the analysis is as a counting problem repeated
+many times across the $(m_a,\gagg)$ plane.
+At a collider, a \emph{signal} is the process we are trying to discover or
+exclude. In this project the signal is
+\begin{equation}
+    e^+e^- \to \gamma a,
+    \qquad
+    a\to\gamma\gamma
+    \quad \text{or} \quad
+    a\ \text{escapes before decaying}.
+\end{equation}
+A \emph{background} is a Standard Model process that can look similar in the
+detector even though no ALP was produced. A \emph{yield} is the expected number
+of events of a given type in the dataset. In collider physics the first
+estimate of a yield is
+\begin{equation}
+    N = \sigma\,\Lint,
+    \label{eq:basic_yield}
+\end{equation}
+where $\sigma$ is the cross section and $\Lint$ is the integrated luminosity.
+The cross section measures how likely the process is to occur in a collision.
+The integrated luminosity measures the size of the dataset: larger luminosity
+means more collisions and therefore more chances to produce rare processes.
+The units are chosen so that if $\sigma$ is in pb and $\Lint$ is in
+pb$^{-1}$, their product is a pure event count. The FCC-ee Z-pole dataset used
+here is $\Lint=150\abinv=1.5\times10^8\pbinv$, so even a small cross section
+can produce many events.
+
+Equation~\eqref{eq:basic_yield} is not yet an experimental prediction.
+It counts events before asking whether the detector can see them or whether
+they pass the analysis selection. For that reason collider analyses introduce
+an efficiency factor. In this paper, \emph{signal efficiency} means the
+fraction of produced signal events that end up contributing to the search
+histogram after lifetime requirements, detector acceptance, photon
+reconstruction, angular-resolution requirements, and object-level selections.
+Schematically,
+\begin{equation}
+    N_\mathrm{selected}
+    =
+    \sigma\,\Lint\,\epsilon_\mathrm{sig}.
+    \label{eq:selected_yield_intro}
+\end{equation}
+The efficiency is not one number fixed by nature. It depends on the ALP mass
+and coupling. A weakly coupled ALP may live long enough to escape the detector,
+so it is efficient for the invisible channel and inefficient for the prompt
+channel. A very light ALP may decay promptly, but its two photons may be so
+close together that the detector reconstructs them as one merged object. A
+high-mass ALP may produce well-separated photons, but with a smaller production
+cross section because the phase space is reduced. The purpose of the analysis
+is to combine all of these effects consistently.
+
+This distinction also explains why the analytic boundaries in the topology map
+are not the final exclusion contours. The analytic boundaries answer questions
+such as ``does the ALP decay before the calorimeter?'' and ``are the two photons
+separated by more than the angular resolution?'' They describe the ideal
+physics topology. The projected sensitivity contour asks a different question:
+``would this signal be large enough, after detector reconstruction, to stand
+out from the Standard Model background?'' To answer that, the analytic signal
+model must be corrected by detector information and compared with simulated
+background distributions.
+
+The analysis therefore keeps two signal counts separate.
+The \emph{expected signal yield}, $N_\mathrm{sig}$, is the number of ALP signal
+events predicted for a chosen $(m_a,\gagg)$ point after applying the signal
+probability, efficiency, and detector correction.
+The \emph{required signal yield}, $N_\mathrm{sig}^\mathrm{req}$, is the number
+of signal events that would be needed to exclude the background-only
+hypothesis at the chosen confidence level.
+A point is projected to be excluded when
+\begin{equation}
+    N_\mathrm{sig}(m_a,\gagg)
+    \geq
+    N_\mathrm{sig}^\mathrm{req}(m_a).
+    \label{eq:expected_vs_required}
+\end{equation}
+The left-hand side is mostly signal physics. The right-hand side is mostly
+background statistics. The simulation pipeline exists to compute the pieces of
+both sides that cannot be obtained reliably from the tree-level analytic
+formulae alone.
+
 \subsection{Signal generation and computational strategy}
 
 Signal events are generated using \textsc{MadGraph5\_aMC@NLO}~\cite{MG5} with a
 UFO model implementing the ALP effective field theory of Eq.~\eqref{eq:lagrangian}.
+The analysis is deliberately not a pure Monte Carlo scan, and it is also not a
+purely analytic plot. The reason is that the two approaches answer different
+questions.
+The analytic formulae give the ideal production rate, the decay probability,
+the recoil-photon energy, and the approximate diphoton opening angle. They are
+excellent for mapping the physics over the full parameter space. For example,
+at a point $(m_a,\gagg)$ one can immediately compute an ideal signal yield of
+the form
+\begin{equation}
+    N_\mathrm{ideal}
+    =
+    \Lint\,\sigma(e^+e^-\to\gamma a)\,P_\mathrm{region}.
+    \label{eq:nideal}
+\end{equation}
+This already tells us whether the ALP tends to be invisible, prompt, displaced,
+or merged. It does not, however, tell us everything needed for an experimental
+sensitivity contour. A detector does not see the analytic final state directly.
+It sees reconstructed photons with finite angular and energy resolution, finite
+acceptance, and finite reconstruction efficiency. It may miss photons, merge
+nearby photons, smear the recoil energy, or move a reconstructed mass peak
+across a bin boundary. Most importantly, an exclusion contour is not determined
+only by how many signal events are produced; it is determined by how large that
+signal would look compared with the Standard Model background in the same
+observable.
+
+This is why the project uses a hybrid strategy. The analytic calculation gives
+the signal model over the dense $(m_a,\gagg)$ grid. The simulation pipeline is
+then used only for the parts that cannot be trusted from the analytic formulae
+alone: the detector-level object reconstruction, the validation of the UFO and
+lifetime convention, the reconstructed signal observables, and the Standard
+Model background shapes. The final contour is the place where these two pieces
+meet: analytic signal production and decay probabilities, corrected by
+detector-level information, compared against simulated background histograms.
+
 The dense exclusion scan is not produced by running a full detector simulation
 at every point in the $180\times180$ mass--coupling grid. Instead, the code uses
 a two-level strategy:
@@ -653,6 +833,51 @@ photon vertex, so at tree level
 $\sigma(e^+e^-\to\gamma a)\propto\gagg^2$ exactly. The shape of the production
 process is therefore controlled mainly by $m_a$ and $\sqrts$, while the coupling
 rescales the yield and changes the lifetime.
+This is the main computational shortcut of the project. If the full
+MadGraph--Pythia--Delphes chain were run for every one of the 32\,400 grid
+points, the campaign would spend most of its time rediscovering quantities that
+are already known exactly at tree level. The production normalisation changes
+as $\gagg^2$, the decay length follows from the analytic width, and the
+resolved/invisible classification follows from comparing $\ell_a$ and
+$\Delta\theta_{\gamma\gamma}$ to detector scales. The Monte Carlo is therefore
+used where it is most valuable: to validate that the UFO really implements the
+same matrix element, to check that the lifetime handed to Pythia matches the
+analytic lifetime, to see how the final-state photons appear after detector
+simulation, and to build correction factors that translate the ideal analytic
+selection into a reconstructed-object selection.
+
+Concretely, the signal simulation does not define the full contour point by
+point. Instead, it answers four practical questions.
+First, does MadGraph give the same production cross section as
+Eq.~\eqref{eq:xsec} for the requested $(m_a,\gagg,\sqrts)$?
+Second, does the width written in the parameter card imply the expected
+proper lifetime and therefore the expected decay behaviour in Pythia?
+Third, after Delphes, do prompt-resolved events reconstruct a diphoton
+invariant mass near $m_a$, and do invisible events reconstruct a recoil photon
+near Eq.~\eqref{eq:Egamma}?
+Fourth, what fraction of generated events survives the detector-level object
+selection compared with the ideal analytic selection?
+The answer to the fourth question is the Delphes correction
+$C_\mathrm{Delphes}$ used later in Eq.~\eqref{eq:nsig}. In this sense, the
+signal simulation calibrates the analytic contour rather than replacing it.
+
+The grid calculation is explicit. For each logarithmically spaced mass $m_a$
+and coupling $\gagg$, the code computes
+\begin{enumerate}
+    \item the production cross section from Eq.~\eqref{eq:xsec}, converted to pb;
+    \item the recoil-photon energy from Eq.~\eqref{eq:Egamma};
+    \item the decay width from Eq.~\eqref{eq:width};
+    \item the boosted decay length $\ell_a$ from Eq.~\eqref{eq:lifetime};
+    \item the survival, prompt-decay, and displaced-decay probabilities from
+    Eqs.~\eqref{eq:survival_prob}--\eqref{eq:decay_window_prob};
+    \item the minimum diphoton opening angle from Eq.~\eqref{eq:dtheta_exact};
+    \item the detector topology label: invisible, prompt-resolved, displaced,
+    or merged.
+\end{enumerate}
+This produces the signature map over the full $(m_a,\gagg)$ plane. The exclusion
+contours are then found by solving for the value of $\gagg$ at which the
+expected signal yield equals the required signal yield at each mass, rather
+than by simulating every point in the two-dimensional plane.
 
 \subsection{Choice of scan ranges}
 
@@ -706,6 +931,56 @@ The detector-level chain for one signal point is:
     \end{aligned}
     \label{eq:pipeline}
 \end{equation}
+Each arrow in Eq.~\eqref{eq:pipeline} has a distinct role. The parameter card
+sets the physical ALP mass, coupling, and width for one point. MadGraph then
+computes the tree-level matrix element and writes an LHE event file containing
+parton-level events and the integrated production weight. Pythia reads the LHE
+events, adds QED initial- and final-state radiation, decays the ALP according to
+the supplied width and lifetime, and writes a HepMC event record containing
+stable final-state particles. Delphes reads the HepMC file and applies a
+parameterised detector response. Finally, the Python analysis reads the Delphes
+ROOT file with \texttt{uproot}/\texttt{awkward}, reconstructs the analysis
+observables, and checks that the point passed all validation gates.
+
+The same chain is also used for backgrounds, with one important difference:
+there is no ALP mass or coupling in the background samples. The background
+samples are Standard Model processes generated at the same collider energy and
+passed through the same Pythia and Delphes detector treatment. They provide the
+expected distribution of ordinary events in the observables where the ALP would
+be searched for. For the prompt-resolved channel this observable is
+$M_{\gamma\gamma}$, because the ALP would appear as a narrow peak in a
+three-photon event. For the invisible channel it is the recoil photon energy,
+because an invisible ALP would appear as a mono-energetic photon plus missing
+energy. These background histograms are then used by the limit solver to decide
+how many signal events would be needed to stand out.
+
+Signal and background are simulated as separate samples rather than as one
+mixed dataset. This is standard for a projected search. The signal depends on
+two continuous parameters, $m_a$ and $\gagg$, so mixing it into the background
+would require a new full dataset for every possible ALP hypothesis. Instead,
+the signal shape and efficiency are computed for representative ALP points,
+and the total signal yield is scaled analytically to any coupling. The
+background does not depend on $m_a$ or $\gagg$, so each background process only
+needs to be simulated once at the chosen collider energy and detector setting.
+The two samples are then combined statistically in the binned limit calculation.
+This avoids the impossible task of generating a literal FCC-ee dataset with
+billions of background events for every ALP mass.
+
+The final production inputs are:
+\begin{itemize}
+    \item the analytic grid of $180\times180=32\,400$ mass--coupling points;
+    \item 284 detector-level ALP signal points, each generated with
+    $10\,000$ events, for a total of $2.84\times10^6$ generated signal events;
+    \item one $e^+e^-\to\gamma\gamma\gamma$ background sample with
+    $10\,000$ generated events;
+    \item one $e^+e^-\to\gamma\nu\bar{\nu}$ background sample with
+    $10\,000$ generated events.
+\end{itemize}
+The generated event counts are not the luminosity-scaled event counts.
+They are finite Monte Carlo samples used to estimate shapes and efficiencies.
+The physical normalisation comes from the MadGraph cross section multiplied by
+the FCC-ee luminosity.
+
 The imported UFO does not expose $\gagg$ directly. The code writes a
 point-specific parameter card by mapping the physical coupling to the UFO
 parameters $f_a$, $K_B$, and $K_W$ through
@@ -776,6 +1051,35 @@ report-facing deliverables.
 The IDEA detector concept~\cite{IDEA} is a proposed FCC-ee detector featuring
 a solenoidal magnetic field, silicon tracking, a drift chamber, and a
 crystal electromagnetic calorimeter.
+Delphes is a fast simulation rather than a full \textsc{Geant4} detector model.
+It does not propagate every particle through detailed detector material.
+Instead, it takes the stable particles in the HepMC event record and applies
+detector-card modules that approximate the main experimental effects:
+geometric acceptance, reconstruction efficiency, momentum and energy smearing,
+particle-flow object construction, isolation, and missing transverse momentum.
+For this project the relevant reconstructed objects are photons and missing
+energy. A photon that falls outside the allowed pseudorapidity range, falls
+below the energy threshold, or fails the parametrised reconstruction efficiency
+does not appear as a reconstructed photon in the output ROOT tree. A photon that
+is reconstructed has its energy and direction smeared according to the detector
+card. The output is therefore not a private FCC-ee reconstruction, but it is a
+consistent detector-level approximation that lets the same selection and
+observable-building logic be applied to signal and background.
+
+This step is conceptually different from the analytic calculation. The analytic
+calculation knows the truth-level four-vectors and the exact ALP mass used to
+generate the event. The analysis code is not allowed to use that information
+when constructing the projected search observable. It uses only reconstructed
+Delphes objects: the number of photons, their reconstructed energies and
+directions, and the reconstructed missing-energy object. This distinction is
+important. The theory can say that a prompt ALP decay produces three photons,
+but Delphes tells us whether those photons would actually be reconstructed as
+three photons after detector acceptance and smearing. The theory can say that
+an invisible ALP gives a recoil photon at a fixed energy, but Delphes tells us
+how that energy appears in the reconstructed histogram. The final contour uses
+this reconstructed-object information through the efficiency correction map and
+through the background histograms.
+
 The key detector parameters used in this analysis are:
 \begin{itemize}
     \item Photon acceptance: $|\eta| < 3.0$, $E_\gamma > 0.5\GeV$;
@@ -898,14 +1202,80 @@ formulae and the file handoff between programs.
     \end{tabular}
 \end{table}
 
-The Belle~II closure is the most important external validation anchor.
+The Belle~II closure is the most important external validation anchor, but it
+has to be interpreted carefully.
 Belle~II operates at $\sqrts = 10.58\GeV$ with $445\pbinv$ and uses the same
 process $e^+e^-\to\gamma\,a$, $a\to\gamma\gamma$.
-The procedure infers the effective signal-yield threshold implied by the
-digitised Belle~II boundary from AxionLimits~\cite{AxionLimits}. It then checks
-that the project production cross section, decay width, lifetime convention,
-and prompt/resolved region logic reproduce the same contour. The closure test
-yields
+However, the public paper does not provide the full binned likelihood,
+background templates, detector-response maps, or event-level data needed to
+reproduce the experimental analysis from first principles.
+The closure test therefore works at the published-contour level.
+It asks a narrower but still essential question: if we take the public
+Belle~II exclusion boundary as the target, do our cross sections, lifetimes,
+acceptance cuts, prompt/resolved logic, unit conversions, interpolation, and
+limit-solving machinery reconstruct that same boundary?
+
+The first step is to load the digitised Belle~II contour from
+AxionLimits~\cite{AxionLimits}. The AxionLimits file stores the excluded region
+as a polygon in $(m_a,\gagg)$, with $m_a$ tabulated in eV.
+The code converts the masses to GeV, removes the artificial high-coupling cap
+used to close the filled polygon, and keeps the lower boundary
+$g_\mathrm{pub}(m_a)$ of the published exclusion.
+This lower boundary is the coupling at which Belle~II excludes each ALP mass.
+
+For every point on this boundary, the closure code evaluates our own
+prompt/resolved event model at the published coupling:
+\begin{equation}
+    N_\mathrm{pub}^\mathrm{model}(m_a)
+    =
+    \Lint^\mathrm{Belle}
+    \,
+    \sigma(e^+e^-\to\gamma a; m_a,g_\mathrm{pub})
+    \,
+    P_\mathrm{prompt}(m_a,g_\mathrm{pub})
+    \,
+    A_\gamma^\mathrm{Belle}
+    \,
+    \Theta_\mathrm{res}(m_a)
+    \,
+    \Theta_E(m_a).
+    \label{eq:belle2_closure_neff}
+\end{equation}
+Here $\Lint^\mathrm{Belle}=445\pbinv$,
+$A_\gamma^\mathrm{Belle}$ is the analytic recoil-photon angular acceptance
+obtained by integrating the $1+\cos^2\theta$ distribution over the Belle~II
+polar-angle range, $P_\mathrm{prompt}=1-\exp(-L_\mathrm{min}/\ell_a)$ is the
+probability that the ALP decays before the prompt scale, and the two step
+functions enforce the Belle~II photon-energy threshold and the condition that
+the two photons from $a\to\gamma\gamma$ are angularly resolved.
+The photon reconstruction efficiency is set to one in this closure because the
+unknown Belle~II efficiencies, background treatment, and statistical procedure
+are absorbed into the inferred effective signal threshold.
+Thus $N_\mathrm{pub}^\mathrm{model}$ should not be read as Belle~II's literal
+counting threshold; it is the effective number of signal events that our public
+model would assign to the published boundary.
+
+The closure is then a round-trip test.
+The code interpolates both $g_\mathrm{pub}(m_a)$ and
+$N_\mathrm{pub}^\mathrm{model}(m_a)$ in log space.
+For a dense set of 300 masses it solves
+\begin{equation}
+    N_\mathrm{prompt}^\mathrm{model}(m_a,g_\mathrm{closure})
+    =
+    N_\mathrm{pub}^\mathrm{model}(m_a)
+    \label{eq:belle2_closure_root}
+\end{equation}
+for $g_\mathrm{closure}$ using a one-dimensional root finder.
+If the implementation is internally consistent, the reconstructed
+$g_\mathrm{closure}(m_a)$ should lie on top of the published
+$g_\mathrm{pub}(m_a)$.
+A mismatch would immediately point to an error in one of the ingredients that
+enters the event model, such as the GeV/eV conversion, the $\mathrm{GeV}^{-2}$
+to pb conversion, the factor of $64\pi$ in the width, the lifetime-to-decay
+probability mapping, the angular-resolution cut, or the numerical contour
+solver.
+
+The closure test yields
 \begin{equation}
     \max_{\ma}
     \left|\log_{10}\!\left(\frac{g_\mathrm{closure}}{g_\mathrm{published}}\right)\right|
@@ -913,9 +1283,13 @@ yields
     \label{eq:closure}
 \end{equation}
 well within the 2\% tolerance used as the acceptance criterion.
-This demonstrates that the analytic model, lifetime convention, and
-signal-region logic are all internally consistent and agree with a published
-experimental result.
+This demonstrates that the public-contour implementation of the analytic
+model, lifetime convention, and prompt/resolved signal-region logic is
+internally consistent and agrees with the published Belle~II boundary at the
+level needed for this project.
+It does not prove that we have reproduced the private Belle~II likelihood.
+Rather, it validates the ingredients that are portable to FCC-ee before we use
+them in the FCC-ee projection.
 
 \subsection{SM background samples}
 
@@ -926,17 +1300,86 @@ Two channels are generated:
     \item \textbf{Resolved-prompt background}: $e^+e^-\to\gamma\gamma\gamma$
     (SM QED triple-photon production),
     with $\sigma = 7.306\,\text{pb}$ and $N_\mathrm{gen} = 10\,000$ events.
+    After Delphes and object selection, the resolved histogram contains
+    23\,592 diphoton-pair entries. This number can be larger than the number of
+    selected events because one event with several photons contributes several
+    photon pairs.
 
     \item \textbf{Invisible background}: $e^+e^-\to\gamma\nu\bar{\nu}$
     (radiative neutrino production),
     with $\sigma = 134.9\,\text{pb}$ and $N_\mathrm{gen} = 10\,000$ events.
+    After Delphes and the exactly-one-photon selection, the recoil-energy
+    histogram contains 2\,684 entries.
 \end{itemize}
-Backgrounds are normalised to $\Lint = 150\abinv$.
-At full luminosity, the expected number of background events across the analysis
-histograms is $2.58\times10^9$ (resolved) and $5.43\times10^9$ (invisible).
-The resolved background is the dominant QED irreducible process for the three-photon
-topology; the invisible background is the leading electroweak process with a
-photon plus missing energy.
+
+These samples are chosen because they are the irreducible Standard Model
+versions of the two signal topologies. A prompt-resolved ALP event contains
+three photons, so ordinary QED three-photon production can fake the same object
+count and contributes a smooth continuum under the $M_{\gamma\gamma}$ signal
+peak. An invisible ALP event contains one photon and missing energy, so
+radiative neutrino production gives the same reconstructed topology without
+any ALP. Reducible backgrounds, such as misidentified particles or
+machine-induced activity, are not included in the present projection and are
+listed as limitations.
+
+The two simulated backgrounds are treated in exactly the same reconstruction
+language as the signal. For the resolved channel, the Delphes ROOT file is
+scanned for events with at least three reconstructed photons, and all
+reconstructed photon pairs in those events are converted into diphoton
+invariant masses. This produces the background shape in the same variable used
+to search for the ALP mass peak, $M_{\gamma\gamma}$. For the invisible channel,
+the ROOT file is scanned for events with exactly one reconstructed photon, and
+the photon energy is used as the recoil-energy observable. This is the same
+variable that maps to the ALP mass through Eq.~\eqref{eq:Egamma}.
+
+The background is not added to the signal event sample event-by-event. Instead,
+it is added statistically as a binned expectation. For each channel, the
+background observable values are histogrammed into bins and normalised to the
+target FCC-ee luminosity,
+\begin{equation}
+    B_i
+    =
+    n_i^\mathrm{raw}
+    \frac{\sigma_\mathrm{bkg}\,\Lint}{N_\mathrm{gen}},
+    \label{eq:bkg_norm}
+\end{equation}
+where $n_i^\mathrm{raw}$ is the number of simulated background entries in bin
+$i$, $\sigma_\mathrm{bkg}$ is the MadGraph cross section for the background
+process, $N_\mathrm{gen}$ is the number of generated background events, and
+$\Lint$ is expressed in inverse pb. These binned values $B_i$ are what enter the
+limit calculation. At full luminosity, the expected number of background events
+across the analysis histograms is $2.58\times10^9$ (resolved) and
+$5.43\times10^9$ (invisible). The resolved background is the dominant QED
+irreducible process for the three-photon topology; the invisible background is
+the leading electroweak process with a photon plus missing energy.
+
+The role of the background is therefore very specific. It does not change the
+ALP production rate, lifetime, or signature classification. Those are signal
+properties. The background changes the amount of signal required for a point to
+be excluded. If the background in the relevant mass or recoil-energy bin is
+large, the signal must be larger to produce the same statistical tension. If
+the background is small, the analysis approaches the conservative few-event
+limit. This is why the final contour cannot be obtained by plotting only the
+analytic signal regions: the analytic regions say what kind of event the ALP
+would make, while the background histograms say how difficult that event is to
+distinguish from the Standard Model.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{results/fccee/background_signal_examples.png}
+    \caption{Binned Standard Model background histograms used in the FCC-ee
+    limit calculation, with example ALP signal templates overlaid.
+    Left: the prompt-resolved channel uses the diphoton invariant mass
+    $M_{\gamma\gamma}$ in reconstructed three-photon events.
+    Right: the invisible channel uses the recoil-photon energy.
+    Orange curves show example ALP hypotheses that pass the
+    $\Delta\chi^2=2.71$ 90\% CL exclusion criterion; blue dashed curves show
+    hypotheses with the same mass but smaller coupling that do not pass the
+    criterion. The signal curves are plotted as expected selected signal events
+    per bin, while the grey histograms show the luminosity-normalised SM
+    background.}
+    \label{fig:background_signal_examples}
+\end{figure}
 
 % ============================================================
 \section{Analysis}
@@ -947,6 +1390,19 @@ photon plus missing energy.
 Each of the $180\times180 = 32\,400$ grid points $(m_\alp, \gagg)$ is
 classified into one of the four signatures using the analytic formulae of
 Section~\ref{sec:theory}.
+This classification is not a statistical limit yet; it is a physics map of what
+the detector would see if an ALP with that mass and coupling were produced. The
+code first computes the mean lab-frame decay length $\ell_a$ and the minimum
+photon separation $\Delta\theta_\mathrm{min}$ for the point. It then compares
+these values to the detector scales $L_\mathrm{min}$, $L_\mathrm{max}$, and
+$\Delta\theta_\mathrm{res}$. If $\ell_a>L_\mathrm{max}$ the ALP is labelled
+invisible. If it decays before $L_\mathrm{max}$ but
+$\Delta\theta_\mathrm{min}<\Delta\theta_\mathrm{res}$, the photons are labelled
+merged. If the photons are resolvable and the decay happens before
+$L_\mathrm{min}$, the point is prompt-resolved. If the photons are resolvable
+but the decay happens between the two length scales, the point is
+displaced-resolved. This grid is useful because it shows which experimental
+analysis would be appropriate before any sensitivity calculation is performed.
 With the IDEA detector assumptions, the grid decomposes as follows
 (Table~\ref{tab:classification}):
 
@@ -984,6 +1440,28 @@ single cluster, falling into the merged category.
 
 \subsection{Signal efficiency and detector corrections}
 
+In an ideal analytic calculation, every produced signal event that satisfies
+the lifetime condition would be counted. A real analysis cannot do that. The
+event must leave reconstructable detector objects, and those objects must pass
+the analysis selection. The signal efficiency is the fraction that survives
+this chain:
+\begin{equation}
+    \epsilon_\mathrm{sig}
+    =
+    \frac{
+        \text{number of produced signal events that enter the search histogram}
+    }{
+        \text{number of produced signal events}
+    }.
+    \label{eq:efficiency_definition}
+\end{equation}
+In practice this efficiency is built from two parts. The first part is
+parametric and simple enough to write down: geometric acceptance, photon
+efficiency, and the probability that the ALP decays in the desired detector
+region. The second part is detector-specific and is estimated with Delphes:
+smearing, object reconstruction, bin migration, and the detailed effect of the
+analysis selection on reconstructed photons.
+
 The expected number of signal events for a given grid point is:
 \begin{equation}
     N_\mathrm{sig} = \Lint \cdot
@@ -993,28 +1471,74 @@ The expected number of signal events for a given grid point is:
     C_\mathrm{Delphes},
     \label{eq:nsig}
 \end{equation}
-where $P_\mathrm{region}$ is the analytic probability that the ALP falls in the
-target signature region:
+This equation is the central bridge between theory and the projected contour.
+The integrated luminosity $\Lint$ sets the total exposure. The production cross
+section $\sigma(\ma,\gagg)$ determines how many ALPs are produced before any
+detector or lifetime requirement. The factor $P_\mathrm{region}$ is the
+probability that the produced ALP falls into the target signature region:
 \begin{align}
     P_\mathrm{invisible} &= e^{-L_\mathrm{max}/\ell_\alp},
     \label{eq:pinv}\\
     P_\mathrm{prompt} &= 1 - e^{-L_\mathrm{min}/\ell_\alp}.
     \label{eq:pprompt}
 \end{align}
-The parametric efficiency $\epsilon_\mathrm{param}$ accounts for angular
-acceptance and photon reconstruction. For the invisible channel it is the
-single-photon acceptance times one photon-efficiency factor; for the
-prompt-resolved channel it is the same acceptance times three photon-efficiency
-factors. The remaining detector response is absorbed into the
-Delphes-derived correction factor.
+The parametric efficiency $\epsilon_\mathrm{param}$ accounts for the simplest
+detector effects that can be written down analytically: angular acceptance and
+photon reconstruction efficiency. The angular acceptance is computed by
+integrating the production angular distribution
+$1+\cos^2\theta$ over the detector pseudorapidity range $|\eta|<3.0$. For the
+invisible channel, the event needs one reconstructed photon, so the efficiency
+is this angular acceptance times one photon-efficiency factor. For the
+prompt-resolved channel, the event needs the recoil photon and two ALP-decay
+photons, so the same acceptance is multiplied by three photon-efficiency
+factors. The final factor, $C_\mathrm{Delphes}$, corrects this idealised
+parametric estimate using detector-level signal samples.
+
+The reason for this correction is that the analytic boundaries are sharp, while
+the detector response is not. Analytically, a point is either above or below an
+angular-resolution threshold, either inside or outside an energy requirement,
+and either prompt or not prompt according to a mean decay length. In a
+reconstructed sample, photons are smeared, photons near a threshold can migrate
+between bins, and finite reconstruction efficiency means that an ideal
+three-photon event may appear with only two reconstructed photons. Without a
+detector correction, the contour would be the sensitivity of an ideal detector,
+not of the IDEA-like detector model used in this project.
+
 The detector correction factor $C_\mathrm{Delphes}$ is derived from
 a channel-aware scan of 284 signal points through the full \textsc{Delphes}
 simulation.
-For each point, the full analysis pipeline---including the signal observable
-histogram, background comparison, and analysis bin acceptance---is compared to
-the analytic expectation.
-The resulting correction is interpolated as a function of ALP mass separately
-for each branch.
+These points are chosen from the contour-relevant branches: the invisible lower
+branch, the invisible upper branch, and the prompt-resolved branch. For each
+point, the code reads the Delphes ROOT file and applies the same object-level
+logic used in the analysis. In the invisible channel it asks how many generated
+events become exactly one reconstructed photon in the recoil-energy histogram.
+In the prompt-resolved channel it asks how many generated events become at
+least three reconstructed photons with a diphoton mass entering the analysis
+bins. The measured detector-level selected fraction is then compared to the
+flat analytic selected fraction $P_\mathrm{region}\epsilon_\mathrm{param}$.
+Their ratio defines the correction,
+\begin{equation}
+    C_\mathrm{Delphes}
+    =
+    \frac{
+      f_\mathrm{selected}^\mathrm{Delphes}
+    }{
+      P_\mathrm{region}\epsilon_\mathrm{param}
+    }.
+    \label{eq:delphes_correction}
+\end{equation}
+This ratio has a direct interpretation. If $C_\mathrm{Delphes}=1$, the analytic
+efficiency already predicts the reconstructed selected fraction. If
+$C_\mathrm{Delphes}<1$, the analytic estimate was too optimistic and the signal
+yield is reduced. If $C_\mathrm{Delphes}>1$, the analytic estimate was too
+pessimistic for that branch, usually because the reconstructed selection keeps
+events in a smoother way than the sharp analytic boundary. The correction is
+not fitted to the background or to the final contour by hand; it is computed
+from the signal simulation and then interpolated in mass.
+The correction is interpolated in $\log m_a$ separately for each contour branch
+and then inserted back into Eq.~\eqref{eq:nsig}. In this way the final contour
+is still fast to compute, but it carries detector-level information from the
+full simulation campaign.
 Across the signal scan, the mean detector correction factors are:
 \begin{itemize}
     \item Invisible lower branch: $\langle C \rangle = 0.998$ (range 0.969--1.003),
@@ -1028,6 +1552,15 @@ Across the signal scan, the mean detector correction factors are:
 
 A projected 90\% confidence level (CL) exclusion is derived using a
 binned Asimov $\dchi$ test~\cite{Cowan2011}.
+The logic is the same in both channels. At a fixed ALP mass the signal is
+expected to appear in a known place: near $M_{\gamma\gamma}=m_a$ for
+prompt-resolved decays, or near the recoil energy
+$E_\gamma=(s-m_a^2)/(2\sqrts)$ for invisible decays. The background simulation
+tells us how many Standard Model events are expected in the neighbouring bins
+of that same observable. The statistical question is then: how many signal
+events would have to be added to the background-only expectation before the
+background-only hypothesis would be excluded at one-sided 90\% CL?
+
 For a given mass hypothesis, the analysis observable is:
 \begin{itemize}
     \item Resolved channel: the diphoton invariant mass $M_{\gamma\gamma}$,
@@ -1036,10 +1569,58 @@ For a given mass hypothesis, the analysis observable is:
     \item Invisible channel: the recoil photon energy $E_\gamma$,
     with the signal modelled as a Gaussian centred at $(s-\ma^2)/(2\sqrts)$
     with width $\sigma_E = \max(0.05\,E_\gamma,\, 0.5\GeV)$.
-    The histogram uses 264 bins over $[0, 50]\GeV$, extending beyond
-    the nominal $\sqrts/2 = 45.6\GeV$ endpoint to retain
-    detector- and ISR-smeared signal events.
+	    The histogram uses 264 bins over $[0, 50]\GeV$, extending beyond
+	    the nominal $\sqrts/2 = 45.6\GeV$ endpoint to retain
+	    detector- and ISR-smeared signal events.
 \end{itemize}
+
+The word ``Asimov'' means that the expected data are taken to be exactly the
+background expectation. In other words, the projected limit asks: if FCC-ee
+observed no excess over the Standard Model expectation, how large a signal
+would be excluded? For each mass hypothesis the signal shape is converted into
+a normalised bin fraction $f_i$, with
+\begin{equation}
+    \sum_i f_i = 1.
+\end{equation}
+The expected signal in bin $i$ is then $N_\mathrm{sig}f_i$, while the expected
+background in the same bin is $B_i$ from Eq.~\eqref{eq:bkg_norm}. In the
+Gaussian approximation used by the projection solver, the signal template is
+integrated analytically over the bin edges using the error function. In the
+Delphes efficiency-map step, the same quantity is also computed directly from
+the detector-level histogram of reconstructed recoil energies or best diphoton
+masses. This is how the analysis checks that the Gaussian template and the
+detector-level signal shapes are mutually consistent.
+
+The intuition is the same as in a simple counting experiment. If the expected
+background in a bin is $B$, then ordinary statistical fluctuations are of order
+$\sqrt{B}$. A signal of one event is impressive if $B$ is nearly zero, but it is
+irrelevant if $B$ is millions of events. Therefore the required signal is not a
+fixed number everywhere. It depends on the background level under the signal
+peak. The binned analysis generalises this idea by adding information from all
+bins near the signal peak, weighting each bin by its background uncertainty.
+
+With background-only Asimov data, the binned test statistic reduces to
+\begin{equation}
+    \dchi(N_\mathrm{sig})
+    =
+    \sum_i
+    \frac{(N_\mathrm{sig} f_i)^2}{\max(B_i,1)}.
+    \label{eq:binned_dchi}
+\end{equation}
+The $\max(B_i,1)$ denominator is a practical floor used to avoid declaring
+infinite sensitivity in a bin where the finite Monte Carlo sample contains no
+background entries. It also makes the projection conservative in sparsely
+populated bins. A point is excluded at one-sided 90\% CL when
+$\dchi=2.71$. Solving Eq.~\eqref{eq:binned_dchi} for $N_\mathrm{sig}$ gives the
+required signal count in Eq.~\eqref{eq:nsig_req}.
+
+This is the criterion for saying that the signal is ``different enough'' from
+the background in the projection. We do not require the signal to be larger
+than the total background in the whole dataset. That would be far too strict,
+because the ALP signal is localised in a specific mass or recoil-energy region.
+Instead, we ask whether adding the signal template would change the binned
+distribution enough that the background-only prediction would be disfavoured
+at 90\% CL.
 
 For each mass point, the minimum signal yield required for exclusion is:
 \begin{equation}
@@ -1054,6 +1635,30 @@ SM background in that bin, and 3 is a conservative event-count floor.
 The threshold $\dchi = 2.71$ corresponds to a one-sided 90\% CL.
 The contour in the $(m_\alp, \gagg)$ plane is then the locus of points where
 $N_\mathrm{sig}(\ma, \gagg) = N_\mathrm{sig}^\mathrm{req}(\ma)$.
+This equation is the final point where all parts of the project meet. The left
+side, $N_\mathrm{sig}$, comes from the analytic ALP production rate, analytic
+decay probability, simple detector acceptance, and Delphes-derived efficiency
+correction. The right side, $N_\mathrm{sig}^\mathrm{req}$, comes from the
+simulated and luminosity-normalised Standard Model background in the relevant
+analysis observable. If $N_\mathrm{sig}$ is larger than
+$N_\mathrm{sig}^\mathrm{req}$, that point would be excluded in the projected
+background-only FCC-ee dataset. If it is smaller, the point would not be
+excluded by the channels included in this analysis.
+Operationally, the code loops over the 180 mass values. For each mass, it first
+computes the required signal count from the corresponding background histogram.
+It then scans $\gagg$ logarithmically to find sign changes in
+\begin{equation}
+    F(\gagg)
+    =
+    N_\mathrm{sig}(\ma,\gagg)
+    -
+    N_\mathrm{sig}^\mathrm{req}(\ma),
+    \label{eq:root_function}
+\end{equation}
+and refines each sign change with a Brent root finder. The resulting root is
+the coupling value plotted on the contour. This root-finding method is used
+instead of simply drawing the nearest grid cell, so the contour is not limited
+to the discrete 180 coupling values used for the topology map.
 
 Because the invisible signal yield is non-monotonic in $\gagg$---it peaks at
 intermediate coupling and falls off both towards small coupling (fewer events

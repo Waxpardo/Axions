@@ -25,6 +25,7 @@ The core computational deliverable is in place:
 | FCC-ee detector-corrected projection | complete | `results/fccee/fccee_projection.csv` |
 | Signature classification over the full grid | complete | `results/fccee/fccee_zpole_signature_classification.csv` |
 | Money plots with AxionLimits context | complete | `results/fccee/money_plot*.png` and `.pdf` |
+| Intro AxionLimits landscape plot | complete | `results/fccee/axionlimits_alp_landscape_intro.png` and `.pdf` |
 | Setup/run documentation | complete | `docs/`, selected directory READMEs, and `Makefile` |
 
 The remaining limitations are physics limitations, not missing software pieces: merged and displaced signatures are classified but not turned into exclusion contours, and the FCC-ee projection does not include detector systematics, machine backgrounds, or pileup-like effects.
@@ -292,6 +293,8 @@ results/fccee/money_plot_alp_full_closeup.png
 results/fccee/money_plot_alp_full_closeup.pdf
 results/fccee/money_plot_alp_full_combined.png
 results/fccee/money_plot_alp_full_combined.pdf
+results/fccee/axionlimits_alp_landscape_intro.png
+results/fccee/axionlimits_alp_landscape_intro.pdf
 ```
 
 ## What The Code Actually Does

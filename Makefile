@@ -36,7 +36,7 @@ N_G             := 180
 .DEFAULT_GOAL := help
 
 .PHONY: help venv axionlimits \
-        theory-grid belle2-closure projection-bootstrap efficiency-map projection money-plots local-all \
+        theory-grid belle2-closure projection-bootstrap efficiency-map projection background-signal-examples money-plots local-all \
         check-mc-tools smoke-test signal-point-belle2 signal-point-fccee background-points \
         condor-background-scan condor-signal-scan collect-scan \
         status clean-pyc
@@ -57,6 +57,7 @@ help:
 	@echo "  make belle2-closure       Rerun the Belle II closure test (needs AxionLimits)"
 	@echo "  make efficiency-map       Rebuild the Delphes-derived detector-correction map"
 	@echo "  make projection           Rebuild the FCC-ee projection + signature classification"
+	@echo "  make background-signal-examples  Rebuild SM-background + example-signal paper figure"
 	@echo "  make money-plots          Rebuild the money plots (full + closeup, needs AxionLimits)"
 	@echo "  make local-all            Run theory-grid, belle2-closure, projection, money-plots in order"
 	@echo ""
@@ -175,6 +176,13 @@ projection: efficiency-map
 		--background-bins $(RESULTS_FCCEE)/fccee_background_bins.csv \
 		--n-mass $(N_MASS) --n-g $(N_G)
 
+background-signal-examples: projection
+	$(PYTHON) analysis/plot_background_signal_examples.py \
+		--config $(FCCEE_CONFIG) \
+		--out-png $(RESULTS_FCCEE)/background_signal_examples.png \
+		--out-pdf $(RESULTS_FCCEE)/background_signal_examples.pdf \
+		--summary-csv $(RESULTS_FCCEE)/background_signal_examples_summary.csv
+
 money-plots: axionlimits projection
 	$(PYTHON) analysis/make_axionlimits_style_plot.py \
 		--axionlimits-dir $(AXIONLIMITS_DIR) \
@@ -189,6 +197,12 @@ money-plots: axionlimits projection
 		--constraint-set full \
 		--output-stem $(RESULTS_FCCEE)/money_plot_alp_full_closeup \
 		--m-min 1e7 --m-max 1e12 --g-min 1e-8 --g-max 1e-1
+	$(PYTHON) analysis/make_axionlimits_style_plot.py \
+		--axionlimits-dir $(AXIONLIMITS_DIR) \
+		--projection $(RESULTS_FCCEE)/fccee_projection.csv \
+		--constraint-set full \
+		--no-fcc-ee \
+		--output-stem $(RESULTS_FCCEE)/axionlimits_alp_landscape_intro
 
 local-all: theory-grid belle2-closure projection money-plots
 	@echo ""
@@ -309,7 +323,8 @@ status:
 	          $(RESULTS_FCCEE)/alp_full_analysis_efficiency_map.csv \
 	          $(RESULTS_FCCEE)/fccee_projection.csv \
 	          $(RESULTS_FCCEE)/fccee_zpole_signature_classification.csv \
-	          $(RESULTS_FCCEE)/money_plot.png; do \
+	          $(RESULTS_FCCEE)/money_plot.png \
+	          $(RESULTS_FCCEE)/axionlimits_alp_landscape_intro.png; do \
 		[ -f $$f ] && echo "  [present] $$f" || echo "  [MISSING] $$f"; \
 	done
 	@echo ""
