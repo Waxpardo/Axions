@@ -1,0 +1,14 @@
+# Ignore compiled binaries
+    analyse_hepmc
+    read_hepmc
+    run_pythia
+
+    # Ignore ROOT files and event data
+    *.root
+    *.hepmc
+    *.lhe
+
+    # Ignore software and heavy output directories
+    MG5_aMC_v3_7_1/
+    delphes/
+    process*/
