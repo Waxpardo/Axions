@@ -212,10 +212,10 @@ Prompt-resolved invariant-mass example:
 
 ```bash
 .venv/bin/python analysis/plot_prompt_resolved_invariant_mass.py \
-  --mass 0.8 \
-  --coupling 8e-5 \
-  --x-min 0.0 \
-  --x-max 2.5 \
+  --mass 20.0 \
+  --coupling 5e-4 \
+  --x-min 10.0 \
+  --x-max 30.0 \
   --out results/fccee/prompt_resolved_invariant_mass_example.png
 ```
 
