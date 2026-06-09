@@ -1,8 +1,18 @@
 .DS_Store
+._*
 .vscode/
+.idea/
 .obsidian/
+.env
+.env.*
+*.swp
+*.tmp
 __pycache__/
 *.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
 .venv/
 venv/
 MG5_aMC_v*/
@@ -11,6 +21,10 @@ Delphes-*/
 delphes-*/
 pythia8*/
 pythia8313/
+*.o
+*.so
+*.dylib
+*.exe
 PROC_*/
 bbbar_test/
 ee_mumu_test/
@@ -38,6 +52,7 @@ external/AxionLimits/
 results/alp_production/**
 results/alp_full_pipeline/**
 results/alp_full_production/**
+results/background_production/**
 results/backgrounds/**
 mc/alp_signal/work*/
 mc/backgrounds/work*/

@@ -261,11 +261,11 @@ signal-point-fccee: check-mc-tools
 
 background-points: check-mc-tools
 	mc/backgrounds/run_sm_background_full_pipeline.sh \
-		results/background_production/resolved_3gamma \
+		results/backgrounds/resolved_3gamma \
 		resolved_3gamma 10000 91.2 \
 		mc/delphes_cards/delphes_card_IDEA.tcl
 	mc/backgrounds/run_sm_background_full_pipeline.sh \
-		results/background_production/invisible_gamma_nunu \
+		results/backgrounds/invisible_gamma_nunu \
 		invisible_gamma_nunu 10000 91.2 \
 		mc/delphes_cards/delphes_card_IDEA.tcl
 
