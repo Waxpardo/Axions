@@ -1,10 +1,9 @@
-# Results Directory
+# Results
 
-This directory contains the report-facing outputs that should be easy to inspect
-without rerunning a full Condor campaign.
-
-Large raw production directories are ignored by git. The CSV, JSON, PNG, and PDF
-files here are the compact artifacts that describe the current deliverable.
+This directory stores compact outputs that are useful to inspect or reuse
+without rerunning the full Monte Carlo production. Large raw files such as
+ROOT, HepMC, and LHE outputs are ignored by git unless they are intentionally
+kept as tiny examples.
 
 ## Belle II Closure
 
@@ -14,22 +13,20 @@ Directory:
 results/belle2_closure/
 ```
 
-Important files:
-
 | File | Meaning |
 |---|---|
 | `belle2_closure_summary.json` | Pass/fail metrics for the public-contour closure. |
-| `belle2_closure.md` | Human-readable closure report. |
+| `belle2_closure.md` | Short machine-written closure summary. |
 | `belle2_closure_contour.csv` | Reconstructed closure curve. |
-| `belle2_closure_target.csv` | Published Belle II lower boundary loaded from AxionLimits. |
-| `belle2_closure.png` / `.pdf` | Visual comparison to Belle II. |
+| `belle2_closure_target.csv` | Public Belle II lower boundary loaded from AxionLimits. |
+| `belle2_closure.png` / `.pdf` | Visual comparison to the Belle II public curve. |
 
-Current status:
-
-The closure currently passes with:
+The checked-in closure passes with
 
 $$
-\max\left|\log_{10}\left(\frac{g_{\mathrm{closure}}}{g_{\mathrm{published}}}\right)\right|
+\max\left|\log_{10}
+\left(\frac{g_{\mathrm{closure}}}{g_{\mathrm{published}}}\right)
+\right|
 =7.59\times10^{-3}.
 $$
 
@@ -41,71 +38,67 @@ Directory:
 results/fccee/
 ```
 
-Paper-draft headline result:
-
-| Channel/feature | Current value |
-|---|---|
-| Collider setup | FCC-ee Z pole, `sqrt(s) = 91.2 GeV`, `L = 150 ab^-1` |
-| Invisible lower branch | `m_a = 0.01--0.92 GeV`, `g_agg = 5.5e-7--7.3e-7 GeV^-1` |
-| Invisible upper branch | `m_a = 0.01--0.92 GeV`, `g_agg = 1.3e-6--5.5e-2 GeV^-1`; numerically fragile lifetime ceiling |
-| Prompt-resolved branch | `m_a = 0.61--80 GeV`, `g_agg = 1.1e-5--2.9e-4 GeV^-1` |
-| Resolved threshold | `m_a ~= 0.597 GeV` from `Delta theta_res = 1.5 deg` |
-| Signature grid | 32,400 points: 14,171 prompt-resolved, 10,452 invisible, 5,989 merged, 1,788 displaced-resolved |
-
-Main files:
+Main contour outputs:
 
 | File | Meaning |
 |---|---|
-| `fccee_projection.csv` | Final detector-corrected FCC-ee contour branches. |
-| `fccee_projection_summary.json` | Config, counts, background inclusion, and correction-map summary. |
-| `fccee_zpole_signature_classification.csv` | Classification of the full $(m_a,g_{a\gamma\gamma})$ plane. |
+| `fccee_projection.csv` | Detector-corrected FCC-ee contour branches. |
+| `fccee_projection_summary.json` | Config, branch counts, background inclusion, and correction-map summary. |
+| `fccee_zpole_signature_classification.csv` | Full $(m_a,g_{a\gamma\gamma})$ topology classification. |
 | `fccee_zpole_signature_classification.png` | Signature-region plot. |
-| `money_plot_alp_full.png` / `.pdf` | Supporting full ALP landscape with FCC-ee overlays. |
-| `money_plot_alp_full_closeup.png` / `.pdf` | Final paper money plot: FCC-ee-relevant close-up with projected contours. |
-| `money_plot_alp_full_combined.png` / `.pdf` | Supporting presentation-style plot linking the full landscape to the FCC-ee close-up. |
-| `money_plot.png` / `.pdf` | Convenience copy of the final close-up money plot. |
-| `axionlimits_alp_landscape_intro.png` / `.pdf` | Paper introduction figure: AxionLimits-only full landscape plus detector-search close-up, without FCC-ee overlays. |
-| `background_signal_examples.png` / `.pdf` | Paper figure showing binned SM backgrounds with excluded/non-excluded ALP signal templates. |
-| `background_signal_examples_summary.csv` | Numerical values for the signal examples in the background-template figure. |
 
-Input/intermediate files kept because they define the contour:
+Main plot outputs:
 
 | File | Meaning |
 |---|---|
-| `fccee_background_bins.csv` | Binned SM background histograms used by the final limit. |
-| `fccee_background_bins_summary.json` | Cross sections, event counts, and bin summary. |
+| `money_plot.png` / `.pdf` | Convenience copy of the FCC-ee close-up money plot. |
+| `money_plot_alp_full_closeup.png` / `.pdf` | FCC-ee-relevant close-up with projected contours. |
+| `money_plot_alp_full.png` / `.pdf` | Wider ALP landscape with FCC-ee overlays. |
+| `money_plot_alp_full_combined.png` / `.pdf` | Full landscape plus close-up view. |
+| `axionlimits_alp_landscape_intro.png` / `.pdf` | AxionLimits landscape without FCC-ee overlays. |
+| `background_signal_examples.png` / `.pdf` | Binned SM backgrounds with example ALP signal templates. |
+| `prompt_resolved_invariant_mass_example.png` / `.pdf` | CMS-style prompt-resolved $m_{\gamma\gamma}$ signal-plus-background example. |
+
+Main inputs and intermediate summaries:
+
+| File | Meaning |
+|---|---|
+| `fccee_background_bins.csv` | Binned SM background histograms used by the contour. |
+| `fccee_background_bins_summary.json` | Cross sections, event counts, and bin summaries. |
 | `fccee_background_yields.csv` | Single-window diagnostic yields. |
-| `alp_full_scan_summary.csv` | Per-point detector-level signal scan summary. |
-| `alp_full_analysis_efficiency_map.csv` | Branch-aware detector correction map used by the contour. |
-| `alp_full_analysis_efficiency_summary.json` | Summary of correction-map statistics. |
+| `fccee_background_yields_summary.json` | Summary of the yield input. |
+| `alp_full_scan_summary.csv` | Collected detector-level ALP signal scan summary. |
+| `alp_full_scan_summary.json` | Pass/fail summary for the detector-level signal scan. |
+| `alp_full_analysis_efficiency_map.csv` | Branch-aware detector correction map. |
+| `alp_full_analysis_efficiency_summary.json` | Correction-map statistics. |
+| `background_signal_examples_summary.csv` | Numerical values used in the background/signal example figure. |
+| `prompt_resolved_invariant_mass_example_summary.csv` | Numerical values used in the invariant-mass example plot. |
 
-The binned SM backgrounds in this directory are the full-stat 10,000-event
-samples used in the paper draft:
+## Current FCC-ee Numbers
 
-| Channel | Process | Cross section | Histogram entries | Expected entries at `150 ab^-1` |
+The checked-in projection uses
+$\sqrt{s}=91.2\,\mathrm{GeV}$ and
+$\mathcal{L}=150\,\mathrm{ab}^{-1}$.
+
+| Branch | Mass span | Coupling span |
+|---|---:|---:|
+| Invisible lower | $0.01$--$0.92\,\mathrm{GeV}$ | $5.5$--$7.3\times10^{-7}\,\mathrm{GeV}^{-1}$ |
+| Invisible upper | $0.01$--$0.92\,\mathrm{GeV}$ | $1.3\times10^{-6}$--$5.5\times10^{-2}\,\mathrm{GeV}^{-1}$ |
+| Prompt-resolved | $0.61$--$80\,\mathrm{GeV}$ | $1.1\times10^{-5}$--$2.9\times10^{-4}\,\mathrm{GeV}^{-1}$ |
+
+The invisible upper branch is a short-lifetime boundary and is less stable than
+the lower invisible and prompt-resolved branches.
+
+The binned backgrounds are:
+
+| Channel | Process | Cross section | Histogram entries | Expected entries at $150\,\mathrm{ab}^{-1}$ |
 |---|---|---:|---:|---:|
-| `resolved_prompt` | `e+ e- -> gamma gamma gamma` | `7.3063 pb` | 23,592 | `2.58e9` |
-| `invisible` | `e+ e- -> gamma nu nu~` | `134.885 pb` | 2,684 | `5.43e9` |
-
-## What Is Not Stored Here
-
-Full raw production outputs are usually too large for the repository:
-
-```text
-results/alp_full_production/
-results/alp_full_pipeline/
-results/backgrounds/
-*.root
-*.hepmc
-*.lhe.gz
-```
-
-Those are ignored by `.gitignore`. If a raw file is needed to reproduce a
-specific table, its location is recorded in the corresponding summary JSON.
+| `resolved_prompt` | $e^+e^-\to\gamma\gamma\gamma$ | `7.3063 pb` | 23,592 | `2.58e9` |
+| `invisible` | $e^+e^-\to\gamma\nu\bar\nu$ | `134.885 pb` | 2,684 | `5.43e9` |
 
 ## Rebuild Order
 
-If all raw ROOT files exist, rebuild in this order:
+If the raw ROOT files are available, rebuild the FCC-ee outputs in this order:
 
 1. `analysis/fccee_background_yields.py`
 2. `analysis/fccee_binned_background.py`
@@ -113,6 +106,7 @@ If all raw ROOT files exist, rebuild in this order:
 4. `analysis/build_full_analysis_efficiency_map.py`
 5. `analysis/fccee_projection.py`
 6. `analysis/plot_background_signal_examples.py`
-7. `analysis/make_axionlimits_style_plot.py`
+7. `analysis/plot_prompt_resolved_invariant_mass.py`
+8. `analysis/make_axionlimits_style_plot.py`
 
-The final plot should be rebuilt after the projection CSV changes.
+The root `README.md` has the exact commands for each stage.

@@ -1,167 +1,125 @@
-# Analysis Code
+# Analysis
 
-This directory turns MC outputs and analytic ALP predictions into validation
-tables, FCC-ee contours, signature classifications, and final plots.
+This directory contains the Python layer that turns analytic predictions and
+Delphes outputs into backgrounds, efficiency maps, exclusion contours, and
+plots.
 
-The code is intentionally split into small scripts because the full project has
-several distinct data products:
+The usual analysis flow is:
 
 ```text
-Delphes ROOT backgrounds
-  -> normalized background histograms
-  -> binned FCC-ee projection
-  -> money plot
+Delphes background ROOT files
+  -> binned SM background histograms
+  -> FCC-ee projected contours
 
-Delphes ROOT signal points
-  -> channel-aware validation histograms
-  -> detector efficiency/correction maps
-  -> corrected FCC-ee projection
+Delphes ALP signal ROOT files
+  -> detector-level validation summaries
+  -> efficiency/correction map
+  -> corrected FCC-ee projected contours
 
 AxionLimits checkout
-  -> existing-constraint landscape
-  -> FCC-ee overlay plot
+  -> existing ALP-photon landscape
+  -> FCC-ee projection overlays
 ```
 
-## Important Files
+## Scripts
+
+| Script | What it does |
+|---|---|
+| `alp_pipeline_histograms.py` | Reads one Delphes ALP signal ROOT file, validates photon observables, and writes histogram summaries. |
+| `axionlimits.py` | Loads selected AxionLimits curves and converts them into the project units. |
+| `belle2_closure.py` | Reconstructs the public Belle II contour using the same production and lifetime model used elsewhere. |
+| `fccee_background_yields.py` | Builds single-window background-yield diagnostics from Delphes ROOT files. |
+| `fccee_binned_background.py` | Builds binned background histograms for the final Asimov limit. |
+| `fccee_projection.py` | Solves the FCC-ee invisible and prompt-resolved contours and writes the signature map. |
+| `build_full_analysis_efficiency_map.py` | Converts detector-level ALP signal scans into correction factors. |
+| `collect_alp_full_scan.py` | Collects Condor per-point ALP summaries into one CSV/JSON pair. |
+| `plot_background_signal_examples.py` | Plots background histograms with example ALP signals. |
+| `plot_prompt_resolved_invariant_mass.py` | Makes a CMS-style $m_{\gamma\gamma}$ signal-plus-background example plot. |
+| `make_axionlimits_style_plot.py` | Builds the AxionLimits landscape and FCC-ee money plots. |
+
+## Configuration Files
+
+The locked inputs live in `analysis/configs/`:
 
 | File | Purpose |
 |---|---|
-| `alp_pipeline_histograms.py` | Validates one detector-level ALP sample and writes ROOT histograms plus JSON. |
-| `axionlimits.py` | Finds and loads AxionLimits data in project units. |
-| `belle2_closure.py` | Reproduces the public Belle II contour at published-contour level. |
-| `fccee_background_yields.py` | Builds single-window diagnostic background yields. |
-| `fccee_binned_background.py` | Builds binned background histograms used by the final contour. |
-| `fccee_projection.py` | Solves FCC-ee invisible and prompt-resolved projected contours. |
-| `build_full_analysis_efficiency_map.py` | Builds the final branch-aware analysis-bin correction map. |
-| `collect_alp_full_scan.py` | Collects Condor per-point detector-level signal summaries. |
-| `make_axionlimits_style_plot.py` | Builds the final AxionLimits-style money plot with FCC-ee overlays. |
+| `belle2_closure_inputs.json` | Belle II public-contour closure inputs. |
+| `fccee_zpole_inputs.json` | FCC-ee Z-pole detector, luminosity, smearing, and contour inputs. |
+| `axionlimits_source.json` | AxionLimits source URL, pinned commit, and citation metadata. |
 
-## How The FCC-ee Projection Works
-
-`fccee_projection.py` is the central limit-setting script. It takes:
-
-1. `analysis/configs/fccee_zpole_inputs.json`
-2. `results/fccee/fccee_background_yields.csv`
-3. `results/fccee/fccee_background_bins.csv`
-4. `results/fccee/alp_full_analysis_efficiency_map.csv`
-
-For each ALP mass, the script computes analytic signal yields:
-
-$$
-N_S=
-\mathcal{L}\,\sigma(m_a,g_{a\gamma\gamma})\,
-P_{\mathrm{region}}(m_a,g_{a\gamma\gamma})\,
-\epsilon_{\mathrm{parametric}}\,
-C_{\mathrm{Delphes}}.
-$$
-
-where:
-
-| Factor | Source |
-|---|---|
-| $\sigma$ | `theory/predictions/predict_grid.py` |
-| $P_{\mathrm{region}}$ | decay-length survival or prompt-decay probability |
-| $\epsilon_{\mathrm{parametric}}$ | angular acceptance and photon efficiency from config |
-| $C_{\mathrm{Delphes}}$ | Delphes-derived full-analysis map |
-
-The two final channels are:
-
-| Channel | Observable | Condition |
-|---|---|---|
-| `invisible` | recoil photon energy | ALP survives past `L_max` |
-| `resolved_prompt` | diphoton invariant mass | ALP decays before `L_min` and photons resolve |
-
-The invisible channel is non-monotonic in $g_{a\gamma\gamma}$. At small coupling
-the production cross section is too small. At large coupling the ALP decays
-before leaving the detector, so the invisible probability vanishes. The script
-therefore writes two branches:
+The FCC-ee config is the main input for the projection:
 
 ```text
-invisible_lower
-invisible_upper
+sqrt_s_GeV = 91.2
+luminosity_ab_inv = 150
+L_min_m = 0.02
+L_max_m = 2.5
+eta_max = 3.0
+photon_energy_min_GeV = 0.5
+photon_efficiency = 0.99
+delta_theta_res_deg = 1.5
 ```
 
-The prompt-resolved channel is monotonic and writes:
+## Background Histograms
 
-```text
-resolved_prompt
-```
-
-The checked-in paper-draft contour currently has:
-
-| Branch | Rows | Mass span | Coupling span |
-|---|---:|---:|---:|
-| `invisible_lower` | 91 | `0.01--0.92 GeV` | `5.5e-7--7.3e-7 GeV^-1` |
-| `invisible_upper` | 91 | `0.01--0.92 GeV` | `1.3e-6--5.5e-2 GeV^-1` |
-| `resolved_prompt` | 98 | `0.61--80 GeV` | `1.1e-5--2.9e-4 GeV^-1` |
-
-The invisible lower and prompt-resolved branches are the robust headline
-results. The invisible upper branch is a rapidly varying lifetime ceiling and
-is retained as a directional boundary rather than a precision contour.
-
-## Signature Classification Map
-
-`fccee_projection.py` also builds the full signature map. For every point in
-the `180 x 180` grid it computes `ell_a`, `Delta theta_min`, and the resolved
-flag, then assigns one of four labels:
-
-| Label | Grid points | Fraction | Meaning |
-|---|---:|---:|---|
-| `prompt_resolved` | 14,171 | 43.7% | prompt decay, two resolved ALP photons |
-| `invisible` | 10,452 | 32.3% | ALP survives past `L_max` |
-| `merged` | 5,989 | 18.5% | decays inside detector but photons merge |
-| `displaced_resolved` | 1,788 | 5.5% | resolved diphoton displaced between `L_min` and `L_max` |
-
-The resolved threshold follows from
-`m_a ~= sqrt(s) * Delta theta_res / 4 = 0.597 GeV`; below that value, prompt
-ALP decays are classified as merged rather than prompt-resolved.
-
-## Binned Background Method
-
-`fccee_binned_background.py` reads Delphes ROOT files and normalizes the
-selected background entries to FCC-ee luminosity:
+The binned-background builder reads Delphes ROOT files and normalizes each bin
+to the FCC-ee integrated luminosity:
 
 $$
-N_{B,\mathrm{bin}}=
+N_{B,i}=
 \sigma_B\,\mathcal{L}\,
-\frac{N_{\mathrm{raw,bin}}}{N_{\mathrm{generated}}}.
+\frac{N_{\mathrm{raw},i}}{N_{\mathrm{generated}}}.
 $$
 
-The resolved background is $e^+e^-\to\gamma\gamma\gamma$; the binned observable
-is all reconstructed diphoton masses in events with at least three photons.
+The two background channels are:
 
-The invisible background is $e^+e^-\to\gamma\nu\bar\nu$; the binned observable is
-the reconstructed recoil photon energy in events with exactly one photon.
+| Channel | Process | Observable |
+|---|---|---|
+| `resolved_prompt` | $e^+e^-\to\gamma\gamma\gamma$ | all reconstructed $M_{\gamma\gamma}$ values in events with at least three photons |
+| `invisible` | $e^+e^-\to\gamma\nu\bar\nu$ | recoil-photon energy in exactly-one-photon events |
 
-The current full-stat background inputs are:
+Build the binned file from ROOT outputs:
 
-| Channel | Cross section | Generated events | Histogram entries | Expected entries at `150 ab^-1` |
+```bash
+.venv/bin/python analysis/fccee_binned_background.py \
+  --resolved-root <resolved_3gamma_delphes.root> \
+  --resolved-banner <resolved_3gamma_banner.txt> \
+  --invisible-root <invisible_gamma_nunu_delphes.root> \
+  --invisible-banner <invisible_gamma_nunu_banner.txt> \
+  --out results/fccee/fccee_background_bins.csv \
+  --summary-json results/fccee/fccee_background_bins_summary.json
+```
+
+The checked-in background inputs are:
+
+| Channel | Cross section | Generated events | Histogram entries | Expected entries at $150\,\mathrm{ab}^{-1}$ |
 |---|---:|---:|---:|---:|
 | `resolved_prompt` | `7.3063 pb` | 10,000 | 23,592 diphoton pairs | `2.58e9` |
 | `invisible` | `134.885 pb` | 10,000 | 2,684 recoil photons | `5.43e9` |
 
-`fccee_projection.py` smears the signal into these bins with a Gaussian whose
-width is set by the locked resolution assumptions. It then solves the Asimov
-condition:
-
-$$
-\Delta\chi^2=2.71
-$$
-
-with a three-event floor to avoid claiming an unphysical sub-event limit.
-
 ## Detector Corrections
 
-`build_full_analysis_efficiency_map.py` compares detector-level ALP signal
-samples to the binned-analysis expectation. It writes one correction factor per
-mass and branch:
+The dense FCC-ee contour is mostly analytic, but it is corrected with
+detector-level ALP signal points. The correction map contains one correction
+factor per mass and branch:
 
 ```text
 detector_correction_factor
 ```
 
-This is used multiplicatively in `fccee_projection.py`. The current correction
-map is branch-aware:
+Build it from a collected full-scan summary:
+
+```bash
+.venv/bin/python analysis/build_full_analysis_efficiency_map.py \
+  --scan-summary results/fccee/alp_full_scan_summary.csv \
+  --config analysis/configs/fccee_zpole_inputs.json \
+  --background-bins results/fccee/fccee_background_bins.csv \
+  --projection results/fccee/fccee_projection.csv \
+  --out results/fccee/alp_full_analysis_efficiency_map.csv \
+  --summary-json results/fccee/alp_full_analysis_efficiency_summary.json
+```
+
+The current correction map has three branches:
 
 ```text
 invisible_lower
@@ -169,71 +127,60 @@ invisible_upper
 resolved_prompt
 ```
 
-The invisible upper branch has very large correction factors in a low-mass
-tail. That branch is retained, but the report should describe it as
-numerically fragile.
+The lower invisible and prompt-resolved corrections are stable. The upper
+invisible branch is a short-lifetime boundary and is more sensitive to small
+changes in lifetime and detector acceptance.
 
-Current mean detector correction factors:
+## FCC-ee Projection
 
-```text
-invisible_lower: 0.998, range 0.969--1.003
-invisible_upper: 7.8e6 mean, range 0.919--1.49e8
-resolved_prompt: 1.02, range 0.900--2.62
+Run the contour solver:
+
+```bash
+.venv/bin/python analysis/fccee_projection.py \
+  --config analysis/configs/fccee_zpole_inputs.json \
+  --out-dir results/fccee \
+  --background-yields results/fccee/fccee_background_yields.csv \
+  --background-bins results/fccee/fccee_background_bins.csv \
+  --n-mass 180 \
+  --n-g 180
 ```
 
-## Locked Configurations
+For each ALP point it computes
 
-The small JSON files in `analysis/configs/` are the machine-readable source of
-truth for detector and analysis assumptions:
+$$
+N_S =
+\mathcal{L}\,
+\sigma(m_a,g_{a\gamma\gamma})\,
+P_{\mathrm{region}}(m_a,g_{a\gamma\gamma})\,
+\epsilon_{\mathrm{parametric}}\,
+C_{\mathrm{Delphes}}.
+$$
 
-| File | Purpose |
-|---|---|
-| `belle2_closure_inputs.json` | Belle II public-contour closure inputs. |
-| `fccee_zpole_inputs.json` | FCC-ee Z-pole projection inputs. |
-| `axionlimits_source.json` | External AxionLimits provenance and citation metadata. |
+The resolved channel uses binned $M_{\gamma\gamma}$ and the invisible channel
+uses binned recoil-photon energy. With background-only Asimov data, the
+resolved-channel test statistic is solved at
 
-The Belle II closure uses $\sqrt{s}=10.58\,\mathrm{GeV}$,
-$\mathcal{L}=445\,\mathrm{pb}^{-1}$, $L_{\min}=0.14\,\mathrm{m}$,
-$L_{\max}=1.55\,\mathrm{m}$, $\theta_{\min}=12.4^\circ$,
-$\theta_{\max}=155.1^\circ$, $E_\gamma^{\min}=0.25\,\mathrm{GeV}$, and
-$\Delta\theta_{\mathrm{res}}=0.8^\circ$. The public target curve is
-`limit_data/AxionPhoton/BelleII.txt` from AxionLimits.
+$$
+\Delta\chi^2 = 2.71
+$$
 
-The FCC-ee Z-pole projection uses $\sqrt{s}=91.2\,\mathrm{GeV}$,
-$\mathcal{L}=150\,\mathrm{ab}^{-1}$, $L_{\min}=0.02\,\mathrm{m}$,
-$L_{\max}=2.5\,\mathrm{m}$, $|\eta|_{\max}=3.0$,
-$E_\gamma^{\min}=0.5\,\mathrm{GeV}$, photon efficiency $0.99$, and
-$\Delta\theta_{\mathrm{res}}=1.5^\circ$.
+with a three-event floor.
 
-The final projection requires binned backgrounds:
+Outputs:
 
 ```text
-background_yields_csv = results/fccee/fccee_background_yields.csv
-background_bins_csv = results/fccee/fccee_background_bins.csv
-require_background_for_contours = true
+results/fccee/fccee_projection.csv
+results/fccee/fccee_projection_summary.json
+results/fccee/fccee_zpole_signature_classification.csv
+results/fccee/fccee_zpole_signature_classification.png
 ```
-
-The resolved mass smearing is
-$\max(0.05\,M_{\gamma\gamma},0.05\,\mathrm{GeV})$. The invisible recoil smearing
-is $\max(0.05\,E_\gamma,0.5\,\mathrm{GeV})$.
-
-Detector corrections are enabled by default:
-
-```text
-use_efficiency_corrections = true
-efficiency_corrections_csv = results/fccee/alp_full_analysis_efficiency_map.csv
-efficiency_correction_column = detector_correction_factor
-```
-
-Use `--no-efficiency-corrections` only for a flat-efficiency diagnostic
-comparison.
 
 ## Belle II Closure
 
-`belle2_closure.py` is imported by the central validator:
+Run:
 
 ```bash
-python theory/predictions/validate.py \
+.venv/bin/python theory/predictions/validate.py \
   --belle2-closure \
   --axionlimits-dir external/AxionLimits
 ```
@@ -242,19 +189,35 @@ The closure:
 
 1. Loads `limit_data/AxionPhoton/BelleII.txt` from AxionLimits.
 2. Converts masses from eV to GeV.
-3. Keeps the lower exclusion boundary.
-4. Computes the expected prompt/resolved signal yield at the published curve.
-5. Infers the effective Belle II signal-event threshold.
-6. Solves the same model back for $g_{a\gamma\gamma}$.
+3. Extracts the lower boundary.
+4. Computes the signal yield using the same prompt-resolved model.
+5. Solves back for the coupling and compares to the public curve.
 
-This verifies units, lifetime convention, production normalization, and
-detector-region logic against Belle II. It is not a private-likelihood
-reimplementation.
+This checks units, cross-section normalization, lifetime convention, and the
+prompt-resolved detector logic.
 
-## Final Plot
+## Plots
 
-Use `make_axionlimits_style_plot.py` for the paper intro landscape and the
-project money plot:
+Background and signal examples:
+
+```bash
+.venv/bin/python analysis/plot_background_signal_examples.py \
+  --config analysis/configs/fccee_zpole_inputs.json \
+  --out-png results/fccee/background_signal_examples.png \
+  --out-pdf results/fccee/background_signal_examples.pdf \
+  --summary-csv results/fccee/background_signal_examples_summary.csv
+```
+
+Prompt-resolved invariant-mass example:
+
+```bash
+.venv/bin/python analysis/plot_prompt_resolved_invariant_mass.py \
+  --mass 10.21 \
+  --coupling 8e-5 \
+  --out results/fccee/prompt_resolved_invariant_mass_example.png
+```
+
+AxionLimits landscape without FCC-ee overlays:
 
 ```bash
 .venv/bin/python analysis/make_axionlimits_style_plot.py \
@@ -264,7 +227,11 @@ project money plot:
   --no-fcc-ee \
   --output-stem results/fccee/axionlimits_alp_landscape_intro \
   --combined-output-stem results/fccee/axionlimits_alp_landscape_intro
+```
 
+FCC-ee money plot:
+
+```bash
 .venv/bin/python analysis/make_axionlimits_style_plot.py \
   --axionlimits-dir external/AxionLimits \
   --projection results/fccee/fccee_projection.csv \
@@ -274,33 +241,13 @@ project money plot:
   --m-min 1e7 --m-max 1e12 --g-min 1e-8 --g-max 1e-1
 ```
 
-The `full` constraint set is the intended final choice. It includes the
-dark-matter, astrophysical, cosmological, and QCD axion reference regions from
-AxionLimits. The `generic` constraint set remains available as a diagnostic
-view when those assumption-dependent regions need to be hidden.
-
 ## Development Checks
 
-Compile all analysis scripts:
+Compile the Python scripts:
 
 ```bash
-python -m py_compile analysis/*.py
+.venv/bin/python -m py_compile analysis/*.py
 ```
 
-Run Gate 3:
-
-```bash
-python theory/predictions/validate.py \
-  --belle2-closure \
-  --axionlimits-dir external/AxionLimits
-```
-
-Rebuild the projection:
-
-```bash
-python analysis/fccee_projection.py \
-  --config analysis/configs/fccee_zpole_inputs.json \
-  --out-dir results/fccee \
-  --background-yields results/fccee/fccee_background_yields.csv \
-  --background-bins results/fccee/fccee_background_bins.csv
-```
+The scripts are intended to run from the repository root so relative paths
+match the config files and checked-in result locations.

@@ -1,7 +1,8 @@
 # Environment Setup
 
-This directory contains lightweight environment files. It does not vendor
-MadGraph, Pythia, Delphes, ROOT, or AxionLimits.
+This directory contains the lightweight setup files used by the local Python
+analysis and the Nikhef/Stoomboot production scripts. MadGraph, Pythia,
+Delphes, ROOT, and AxionLimits are not vendored here.
 
 ## Python
 
@@ -42,7 +43,7 @@ before running the smoke or production scripts on Stoomboot. The script:
 
 1. Clears compiler-related environment variables that often cause mismatches.
 2. Sources a CERN LCG view.
-3. Sets `MG5ROOT` if the user has not set it.
+3. Sets `MG5ROOT` if it is not already set.
 4. Exposes Pythia8 and Delphes helper paths.
 5. Prints command locations and compiler versions for debugging.
 
@@ -53,8 +54,14 @@ export MG5ROOT=/data/alice/<username>/MadGraph5_aMC/MG5_aMC_v3_7_1
 source env/setup_nikhef_lcg.sh
 ```
 
-The setup guide with first-time cluster instructions is:
+After sourcing the environment, a good first cluster check is:
 
-```text
-docs/nikhef-mg5-pythia-hepmc-smoke-test.md
+```bash
+cd mc/hepmc_smoke_test
+./run_mg5_to_delphes_smoke_test.sh work 1000 100.0 "$DELPHES_CARD"
+cd ../..
+python3 theory/predictions/validate.py mc/hepmc_smoke_test/work --pipeline-smoke
 ```
+
+The full stage order and production commands are in the repository root
+`README.md`.

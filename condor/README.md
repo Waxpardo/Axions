@@ -1,36 +1,52 @@
-# ALP Production on Nikhef Condor
+# HTCondor Production
 
-Stable production entrypoint:
+This directory contains the point lists and submit files for running the
+pipeline on the Nikhef/Stoomboot cluster.
+
+Before submitting jobs:
+
+```bash
+source env/setup_nikhef_lcg.sh
+```
+
+Also create the log directories used by the submit files. HTCondor does not
+create these automatically:
+
+```bash
+mkdir -p logs/alp_production/fccee_z_50 \
+         logs/alp_full_production/fccee_z_full_projection_fullbg_channelaware \
+         logs/backgrounds/fccee_z_backgrounds
+```
+
+Do not add header rows to point files. Stoomboot's
+`queue ... from <file>` treats every non-empty row as a job.
+
+## Production-Only ALP Scan
+
+Submit:
 
 ```bash
 condor_submit condor/submit_alp_scan.sub
 ```
 
-The default submit file reads:
+Default point file:
 
 ```text
 condor/alp_mass_grid_fccee_z_50.txt
 ```
 
-Do not add a header row to Condor point files; Stoomboot's
-`queue ... from <file>` treats every non-empty row as a job.
+That file queues 50 log-spaced masses from $0.01$ to $10\,\mathrm{GeV}$ at
+$\sqrt{s}=91.2\,\mathrm{GeV}$, with `10000` events per mass and reference
+coupling $g_{\mathrm{ref}}=10^{-4}\,\mathrm{GeV}^{-1}$.
 
-That file queues 50 log-spaced ALP masses from $0.01$ to
-$10\,\mathrm{GeV}$ at $\sqrt{s}=91.2\,\mathrm{GeV}$, with `10000` events per
-mass and a reference coupling $g_{\mathrm{ref}}=10^{-4}\,\mathrm{GeV}^{-1}$.
-
-Only one reference coupling is generated because the associated-production
-matrix element has exactly:
+Only one reference coupling is needed for production-only cross-section scans
+because
 
 $$
-\sigma(e^+e^-\to a\gamma)\propto g_{a\gamma\gamma}^2 .
+\sigma(e^+e^-\to\gamma a)\propto g_{a\gamma\gamma}^2.
 $$
 
-Downstream scans should rescale the validated reference cross section to the
-full coupling grid. Lifetime and survival probabilities are applied
-analytically; the Condor production LHE keeps the ALP stable.
-
-To regenerate or customize the point file:
+Generate a custom point file:
 
 ```bash
 python3 condor/make_alp_mass_grid.py \
@@ -48,77 +64,49 @@ python3 condor/make_alp_mass_grid.py \
 Manual one-point test:
 
 ```bash
-source env/setup_nikhef_lcg.sh
-condor/run_alp_point.sh 0 1.0 10.58 1e-4 100 validation_manual
+condor/run_alp_point.sh 0 1.0 91.2 1e-4 100 validation_manual
 ```
 
-Outputs are written below:
+Outputs:
 
 ```text
 results/alp_production/<campaign>/
 logs/alp_production/<campaign>/
 ```
 
-HTCondor does not create the `log =`/`output =`/`error =` directories named in
-a `.sub` file — it requires them to exist at submission time and fails
-otherwise. A fresh clone therefore needs the campaign log directories before
-submission. For the default campaigns, run:
+## Detector-Level ALP Signal Scan
+
+Submit the detector-level signal campaign:
 
 ```bash
-mkdir -p logs/alp_production/<campaign> \
-         logs/alp_full_production/<campaign> \
-         logs/backgrounds/<campaign>
-```
-
-Use the campaign names in the relevant point files or submit descriptions, for
-example `fccee_z_50` or `fccee_z_full_projection_fullbg_channelaware`.
-
-Each point writes a `point_summary.csv` and a validation JSON containing the
-Gate 1 cross-section comparison.
-
-## Final Detector-Level Signal Production
-
-The production-only scan above is useful for cross-section validation and fast
-analytic rescaling. It does not contain the detector-level $a\to\gamma\gamma$
-mass reconstruction.
-
-For final signal-production settings use either the example grid or the
-projection-derived point list:
-
-```bash
-condor_submit condor/submit_alp_full_scan.sub
 condor_submit condor/submit_alp_full_projection_scan.sub
 ```
 
-The example full scan reads:
-
-```text
-condor/alp_full_points_fccee_z_example.txt
-```
-
-The projection-derived scan reads:
+Default point file:
 
 ```text
 condor/alp_full_points_fccee_z_projection.txt
 ```
 
-Each full point runs MG5, Pythia with the ALP lifetime and decay, Delphes, and
-`analysis/alp_pipeline_histograms.py --require-pass`. A point fails if the
-channel-aware detector validation does not pass. Resolved channels validate the
-ALP diphoton invariant mass; invisible channels validate the recoil photon
-without requiring reconstructed ALP daughter photons.
-
-The detector-level campaign used by the current paper draft is:
+Each job runs:
 
 ```text
-campaign = fccee_z_full_projection_fullbg_channelaware
-Condor cluster = 4797476
-points = 284
-Gate 1 passed = 284
-channel-aware detector validation passed = 284
+MadGraph -> Pythia ALP decay/lifetime -> Delphes -> detector validation
 ```
 
-After a rerun finishes, collect the per-point summaries with:
+The same runner can also be used with the smaller example list:
+
+```bash
+condor_submit condor/submit_alp_full_scan.sub
+```
+
+which reads:
+
+```text
+condor/alp_full_points_fccee_z_example.txt
+```
+
+After the campaign finishes, collect the summaries:
 
 ```bash
 python3 analysis/collect_alp_full_scan.py \
@@ -127,30 +115,41 @@ python3 analysis/collect_alp_full_scan.py \
   --summary-json results/fccee/alp_full_scan_summary.json
 ```
 
-## SM Background Production
+The collected summary feeds:
 
-FCC-ee production contours must include backgrounds. The background submit file
-is:
+```text
+analysis/build_full_analysis_efficiency_map.py
+```
+
+which writes:
+
+```text
+results/fccee/alp_full_analysis_efficiency_map.csv
+results/fccee/alp_full_analysis_efficiency_summary.json
+```
+
+## SM Background Scan
+
+Submit:
 
 ```bash
 condor_submit condor/submit_background_scan.sub
 ```
 
-with points in:
+Default point file:
 
 ```text
 condor/background_points_fccee_z.txt
 ```
 
-The current required backgrounds are:
+It contains:
 
 | Label | Process |
 |---|---|
 | `resolved_3gamma` | $e^+e^-\to\gamma\gamma\gamma$ |
 | `invisible_gamma_nunu` | $e^+e^-\to\gamma\nu\bar\nu$ |
 
-After the Delphes ROOT files exist, build the window-yield diagnostic input
-with:
+After the jobs finish, build the background inputs:
 
 ```bash
 python3 analysis/fccee_background_yields.py \
@@ -159,11 +158,7 @@ python3 analysis/fccee_background_yields.py \
   --invisible-root <invisible_gamma_nunu_delphes.root> \
   --invisible-banner <invisible_gamma_nunu_banner.txt> \
   --out results/fccee/fccee_background_yields.csv
-```
 
-Build the binned background input used by the final-style contours with:
-
-```bash
 python3 analysis/fccee_binned_background.py \
   --resolved-root <resolved_3gamma_delphes.root> \
   --resolved-banner <resolved_3gamma_banner.txt> \
@@ -173,14 +168,42 @@ python3 analysis/fccee_binned_background.py \
   --summary-json results/fccee/fccee_background_bins_summary.json
 ```
 
-`analysis/fccee_projection.py` refuses to build production contours without a
-background-yield CSV unless `--allow-zero-background` is explicitly passed for a
-smoke-only plot. If `results/fccee/fccee_background_bins.csv` exists, the
-projection uses the binned Asimov $\Delta\chi^2$ method; otherwise it falls
-back to the window-yield method.
+## Files
 
-The background campaign used by the current paper draft is Condor cluster
-`4796877`, with 10,000 generated events per channel. It yields 23,592
-resolved diphoton-pair entries for `resolved_3gamma` and 2,684 one-photon
-recoil entries for `invisible_gamma_nunu`, normalized to `2.58e9` and `5.43e9`
-expected entries respectively at `150 ab^-1`.
+| File | Role |
+|---|---|
+| `make_alp_mass_grid.py` | Writes a production-only mass scan point file. |
+| `make_alp_full_points_from_projection.py` | Builds detector-level points from the projected contours. |
+| `run_alp_point.sh` | Runs one production-only ALP job. |
+| `run_alp_full_point.sh` | Runs one full detector-level ALP job. |
+| `run_background_point.sh` | Runs one SM background job. |
+| `submit_alp_scan.sub` | Production-only ALP submit file. |
+| `submit_alp_full_projection_scan.sub` | Detector-level ALP submit file. |
+| `submit_background_scan.sub` | SM background submit file. |
+
+## Common Checks
+
+Check queued jobs:
+
+```bash
+condor_q
+```
+
+Check held jobs:
+
+```bash
+condor_q -hold
+```
+
+Inspect one job output:
+
+```bash
+tail -n 80 logs/alp_full_production/<campaign>/job_<cluster>_<jobid>.err
+tail -n 80 logs/alp_full_production/<campaign>/job_<cluster>_<jobid>.out
+```
+
+Most failures come from one of three things:
+
+1. The LCG environment was not sourced.
+2. The log directories were not created before `condor_submit`.
+3. `MG5ROOT`, `DELPHES_DIR`, or `DELPHES_CARD` points to a missing install.

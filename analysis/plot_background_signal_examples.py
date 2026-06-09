@@ -1,7 +1,6 @@
 """Plot FCC-ee background histograms with example ALP signal hypotheses.
 
-The figure is intended for the paper methods/results discussion. It shows the
-two binned observables used by the limit calculation:
+The figure shows the two binned observables used by the limit calculation:
 
 * prompt-resolved: diphoton invariant mass, M_gg;
 * invisible: recoil-photon energy.

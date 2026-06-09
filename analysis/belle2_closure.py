@@ -389,7 +389,7 @@ def plot_closure(
     plt.close(fig)
 
 
-def write_report(summary: dict[str, Any], out: Path) -> None:
+def write_markdown_summary(summary: dict[str, Any], out: Path) -> None:
     status = summary["status"]
     inputs = summary["inputs"]
     residual = summary["closure_residual_log10"]
@@ -478,7 +478,7 @@ def run_belle2_closure(
     target.to_csv(out_dir / "belle2_closure_target.csv", index=False)
     closure.to_csv(out_dir / "belle2_closure_contour.csv", index=False)
     (out_dir / "belle2_closure_summary.json").write_text(json.dumps(summary, indent=2) + "\n")
-    write_report(summary, out_dir / "belle2_closure.md")
+    write_markdown_summary(summary, out_dir / "belle2_closure.md")
     plot_closure(
         closure,
         target,

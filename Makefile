@@ -1,10 +1,8 @@
 # Makefile for the Photophilic ALP Search pipeline (Belle II / FCC-ee Z-pole).
 #
-# This file ties together the stages documented in
-# docs/repository-build-and-pipeline-report.md (section 9, "Full Pipeline From
-# Scratch") so a fresh collaborator can drive the project with `make <target>`
-# instead of hunting for the right command. It does not invent any new
-# behaviour: every recipe below is the same command shown in that runbook.
+# This file ties together the stages documented in README.md so the main
+# local workflow can be driven with `make <target>` instead of copying long
+# commands by hand.
 #
 # IMPORTANT — two tiers of targets:
 #
@@ -15,16 +13,15 @@
 #   2. MC / CLUSTER targets need the MadGraph5_aMC + Pythia8 + Delphes stack
 #      (sourced via env/setup_nikhef_lcg.sh, normally only available on
 #      Nikhef/Stoomboot) and, for full-statistics production, an HTCondor
-#      submit node. These targets wrap the documented commands directly; if
-#      the required tools are missing they fail fast with a pointer to
-#      docs/repository-build-and-pipeline-report.md section 9 rather than a
-#      bare "command not found".
+#      submit node. These targets fail early with a pointer to the setup
+#      README when the required tools are missing.
 #
 # Run `make help` (or just `make`) for an overview.
 
-PYTHON      ?= python3
 VENV        := .venv
 VENV_BIN    := $(VENV)/bin
+SYSTEM_PYTHON ?= python3
+PYTHON      ?= $(VENV_BIN)/python
 AXIONLIMITS_DIR    := external/AxionLimits
 AXIONLIMITS_COMMIT := 7d375f4879b32406a239fe48d2615a4bfd9bc0bb
 FCCEE_CONFIG    := analysis/configs/fccee_zpole_inputs.json
@@ -36,7 +33,7 @@ N_G             := 180
 .DEFAULT_GOAL := help
 
 .PHONY: help venv axionlimits \
-        theory-grid belle2-closure projection-bootstrap efficiency-map projection background-signal-examples money-plots local-all \
+        theory-grid belle2-closure projection-bootstrap efficiency-map projection background-signal-examples prompt-resolved-mass-example money-plots local-all \
         check-mc-tools smoke-test signal-point-belle2 signal-point-fccee background-points \
         condor-background-scan condor-signal-scan collect-scan \
         status clean-pyc
@@ -57,9 +54,10 @@ help:
 	@echo "  make belle2-closure       Rerun the Belle II closure test (needs AxionLimits)"
 	@echo "  make efficiency-map       Rebuild the Delphes-derived detector-correction map"
 	@echo "  make projection           Rebuild the FCC-ee projection + signature classification"
-	@echo "  make background-signal-examples  Rebuild SM-background + example-signal paper figure"
+	@echo "  make background-signal-examples  Rebuild SM-background + example-signal figure"
+	@echo "  make prompt-resolved-mass-example  Rebuild the CMS-style m_gg example figure"
 	@echo "  make money-plots          Rebuild the money plots (full + closeup, needs AxionLimits)"
-	@echo "  make local-all            Run theory-grid, belle2-closure, projection, money-plots in order"
+	@echo "  make local-all            Run the full local Python chain in order"
 	@echo ""
 	@echo "MC production (needs MadGraph5_aMC/Pythia8/Delphes; source env/setup_nikhef_lcg.sh):"
 	@echo "  make smoke-test           Generic MG5->Pythia->HepMC->Delphes smoke test"
@@ -76,15 +74,15 @@ help:
 	@echo "  make status               Show which checked-in results/configs exist"
 	@echo "  make clean-pyc            Remove __pycache__ directories and *.pyc files"
 	@echo ""
-	@echo "See docs/repository-build-and-pipeline-report.md section 9 for the full"
-	@echo "from-scratch narrative this Makefile is a shortcut for."
+	@echo "See README.md for the full stage order and the directory READMEs"
+	@echo "for details on each part of the pipeline."
 
 ## ------------------------------------------------------------------------
-## Environment setup  (runbook 9.2, 9.4)
+## Environment setup
 ## ------------------------------------------------------------------------
 
 venv:
-	$(PYTHON) -m venv $(VENV)
+	$(SYSTEM_PYTHON) -m venv $(VENV)
 	$(VENV_BIN)/pip install --upgrade pip
 	$(VENV_BIN)/pip install -r env/requirements.txt
 	@echo ""
@@ -109,9 +107,9 @@ axionlimits:
 		fi
 
 ## ------------------------------------------------------------------------
-## Local analysis chain  (runbook 9.6, 9.7, 9.11-9.13)
+## Local analysis chain
 ##
-## These targets only touch Python + the CSV/JSON deliverables already
+## These targets only touch Python + the CSV/JSON outputs already
 ## checked into results/ and analysis/configs/ -- no MadGraph/Pythia/Delphes
 ## and no cluster access required.
 ## ------------------------------------------------------------------------
@@ -183,37 +181,44 @@ background-signal-examples: projection
 		--out-pdf $(RESULTS_FCCEE)/background_signal_examples.pdf \
 		--summary-csv $(RESULTS_FCCEE)/background_signal_examples_summary.csv
 
+prompt-resolved-mass-example: projection
+	$(PYTHON) analysis/plot_prompt_resolved_invariant_mass.py \
+		--config $(FCCEE_CONFIG) \
+		--out $(RESULTS_FCCEE)/prompt_resolved_invariant_mass_example.png \
+		--summary $(RESULTS_FCCEE)/prompt_resolved_invariant_mass_example_summary.csv
+
 money-plots: axionlimits projection
 	$(PYTHON) analysis/make_axionlimits_style_plot.py \
 		--axionlimits-dir $(AXIONLIMITS_DIR) \
 		--projection $(RESULTS_FCCEE)/fccee_projection.csv \
 		--constraint-set full \
 		--output-stem $(RESULTS_FCCEE)/money_plot_alp_full \
-		--also-save-as $(RESULTS_FCCEE)/money_plot \
 		--combined-output-stem $(RESULTS_FCCEE)/money_plot_alp_full_combined
 	$(PYTHON) analysis/make_axionlimits_style_plot.py \
 		--axionlimits-dir $(AXIONLIMITS_DIR) \
 		--projection $(RESULTS_FCCEE)/fccee_projection.csv \
 		--constraint-set full \
 		--output-stem $(RESULTS_FCCEE)/money_plot_alp_full_closeup \
+		--also-save-as $(RESULTS_FCCEE)/money_plot \
 		--m-min 1e7 --m-max 1e12 --g-min 1e-8 --g-max 1e-1
 	$(PYTHON) analysis/make_axionlimits_style_plot.py \
 		--axionlimits-dir $(AXIONLIMITS_DIR) \
 		--projection $(RESULTS_FCCEE)/fccee_projection.csv \
 		--constraint-set full \
 		--no-fcc-ee \
-		--output-stem $(RESULTS_FCCEE)/axionlimits_alp_landscape_intro
+		--output-stem $(RESULTS_FCCEE)/axionlimits_alp_landscape_intro \
+		--combined-output-stem $(RESULTS_FCCEE)/axionlimits_alp_landscape_intro
 
-local-all: theory-grid belle2-closure projection money-plots
+local-all: theory-grid belle2-closure projection background-signal-examples prompt-resolved-mass-example money-plots
 	@echo ""
 	@echo "Local analysis chain complete: theory grid, Belle II closure,"
-	@echo "FCC-ee projection, and money plots have been rebuilt."
+	@echo "FCC-ee projection, example figures, and money plots have been rebuilt."
 
 ## ------------------------------------------------------------------------
-## MC production  (runbook 9.3, 9.5, 9.8, 9.9)
+## MC production
 ##
 ## These need the MadGraph5_aMC + Pythia8 + Delphes stack. On Nikhef that
-## means `source env/setup_nikhef_lcg.sh` first; see runbook section 9.3 for
+## means `source env/setup_nikhef_lcg.sh` first; see env/README.md for
 ## how to point it at your own MG5ROOT. We check for the key binaries up front
 ## so a missing stack fails with a clear pointer instead of a raw
 ## "command not found" three directories deep.
@@ -230,7 +235,7 @@ check-mc-tools:
 		echo ""; \
 		echo "The MC stack (MadGraph5_aMC, Pythia8, Delphes, ROOT) is not on PATH."; \
 		echo "On Nikhef:   source env/setup_nikhef_lcg.sh"; \
-		echo "Details:     docs/repository-build-and-pipeline-report.md section 9.3"; \
+		echo "Details:     env/README.md and mc/README.md"; \
 		exit 1; \
 	fi
 
@@ -265,12 +270,12 @@ background-points: check-mc-tools
 		mc/delphes_cards/delphes_card_IDEA.tcl
 
 ## ------------------------------------------------------------------------
-## HTCondor batch submission  (runbook 9.9, 9.11; Nikhef/Stoomboot only)
+## HTCondor batch submission  (Nikhef/Stoomboot only)
 ##
 ## condor_submit schedules jobs and returns immediately -- it does not block
 ## until they finish, so these targets cannot be chained into "make
 ## local-all". Collect the results with `make collect-scan` once Condor
-## reports the campaign as done (`condor_q`), then continue with
+## shows the campaign as done (`condor_q`), then continue with
 ## `make efficiency-map` / `make projection`.
 ##
 ## NOTE: HTCondor requires the log/output/error directories named in each
@@ -283,14 +288,14 @@ background-points: check-mc-tools
 condor-background-scan:
 	@command -v condor_submit >/dev/null 2>&1 || { \
 		echo "condor_submit not found -- this target only runs on a Nikhef/Stoomboot submit node."; \
-		echo "See condor/README.md and docs/repository-build-and-pipeline-report.md section 9.9."; \
+		echo "See condor/README.md."; \
 		exit 1; }
 	condor_submit condor/submit_background_scan.sub
 
 condor-signal-scan:
 	@command -v condor_submit >/dev/null 2>&1 || { \
 		echo "condor_submit not found -- this target only runs on a Nikhef/Stoomboot submit node."; \
-		echo "See condor/README.md and docs/repository-build-and-pipeline-report.md section 9.11."; \
+		echo "See condor/README.md."; \
 		exit 1; }
 	condor_submit condor/submit_alp_full_projection_scan.sub
 
@@ -314,7 +319,7 @@ status:
 		[ -f $$f ] && echo "  [present] $$f" || echo "  [MISSING] $$f"; \
 	done
 	@echo ""
-	@echo "Key checked-in deliverables:"
+	@echo "Key checked-in outputs:"
 	@for f in theory/predictions/theory_grid.csv \
 	          results/belle2_closure/belle2_closure_summary.json \
 	          $(RESULTS_FCCEE)/fccee_background_yields.csv \

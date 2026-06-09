@@ -325,7 +325,7 @@ def gate3_belle2_closure(
         "summary_path": str(out_dir / "belle2_closure_summary.json"),
         "plot_png": str(out_dir / "belle2_closure.png"),
         "plot_pdf": str(out_dir / "belle2_closure.pdf"),
-        "report_path": str(out_dir / "belle2_closure.md"),
+        "markdown_summary_path": str(out_dir / "belle2_closure.md"),
         "summary": summary,
     }
 
