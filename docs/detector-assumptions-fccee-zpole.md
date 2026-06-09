@@ -24,6 +24,14 @@ projection. The machine-independent physics formulas live in
 | Invisible recoil histogram | `264` bins over `0--50 GeV` | Keeps smeared endpoint photons above `sqrt(s)/2` |
 | Delphes efficiency correction | `detector_correction_factor` | Branch-aware correction from full-analysis signal map |
 
+The paper-draft scan domain is:
+
+```text
+m_a = 0.01--80 GeV
+g_agg = 1e-8--1e-1 GeV^-1
+physics benchmark = photophilic ALP with tree-level C_gammaZ = 0
+```
+
 ## Origin of the Numbers
 
 The luminosity and Z-pole energy are the project baseline. The IDEA detector
@@ -56,6 +64,18 @@ The current deliverable therefore has two projected FCC-ee contours:
 `invisible` and `resolved_prompt`. The displaced and merged regions are shown
 as physics interpretation regions, not claimed as final searches.
 
+For the checked-in `180 x 180` grid, the signature map contains:
+
+| Label | Grid points | Fraction |
+|---|---:|---:|
+| `prompt_resolved` | 14,171 | 43.7% |
+| `invisible` | 10,452 | 32.3% |
+| `merged` | 5,989 | 18.5% |
+| `displaced_resolved` | 1,788 | 5.5% |
+
+The resolved/merged boundary is at
+`m_a ~= sqrt(s) * Delta theta_res / 4 = 0.597 GeV`.
+
 ## Binned Limit Settings
 
 The production contour uses binned background inputs when
@@ -68,6 +88,8 @@ observable = M_gg
 signal shape = Gaussian centered at m_a
 resolution = max(0.05 * m_a, 0.05 GeV)
 background = e+ e- -> gamma gamma gamma after Delphes
+current input = sigma 7.3063 pb, 10000 generated events,
+                23592 diphoton-pair entries, 2.58e9 expected entries
 ```
 
 Invisible region:
@@ -79,6 +101,8 @@ signal shape = Gaussian centered at E_gamma
 resolution = max(0.05 * E_gamma, 0.5 GeV)
 background = e+ e- -> gamma nu nu~ after Delphes
 histogram = 264 bins over 0--50 GeV
+current input = sigma 134.885 pb, 10000 generated events,
+                2684 recoil entries, 5.43e9 expected entries
 ```
 
 The binned Asimov requirement is:
@@ -101,11 +125,30 @@ where `C_Delphes` is interpolated from
 `detector_correction_factor` column. The correction is branch-aware for
 `invisible_lower`, `invisible_upper`, and `resolved_prompt`.
 
+The current contour endpoints implied by these settings are:
+
+| Branch | Mass span | Coupling span | Interpretation |
+|---|---:|---:|---|
+| `invisible_lower` | `0.01--0.92 GeV` | `5.5e-7--7.3e-7 GeV^-1` | robust production/survival floor |
+| `invisible_upper` | `0.01--0.92 GeV` | `1.3e-6--5.5e-2 GeV^-1` | short-lifetime ceiling; fragile in low-mass tail |
+| `resolved_prompt` | `0.61--80 GeV` | `1.1e-5--2.9e-4 GeV^-1` | robust prompt/resolved contour |
+
 ## Limitations
 
 The Delphes correction is interpolated from the completed contour-point scan. A
 second full-signal scan at the corrected contour points would be needed for a
 fully iterated detector-corrected result.
+
+The current mean detector correction factors are approximately:
+
+```text
+invisible_lower: 0.998, range 0.969--1.003
+invisible_upper: 7.8e6 mean, range 0.919--1.49e8
+resolved_prompt: 1.02, range 0.900--2.62
+```
+
+The invisible upper branch is therefore useful as the expected lifetime ceiling,
+but it should not be quoted as a precision contour.
 
 The present angular-resolution boundary uses a simple minimum opening-angle
 estimate. A final detector note should replace it with a cluster-level study if

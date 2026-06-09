@@ -53,13 +53,12 @@ REFERENCE_FIGSETUP = (
 )
 CONSTRAINT_SETS = ("generic", "full")
 
-# FCC-ee projection accent palette. The existing AxionLimits regions are solid
-# red/green/gray/blue blocks, so the project overlays use a colorblind-safe
-# Okabe-Ito blue/orange pair with translucent fills and dashed contours.
-FCCEE_INVISIBLE_FILL = "#56B4E9"
-FCCEE_INVISIBLE_EDGE = "#0072B2"
-FCCEE_PROMPT_FILL = "#E69F00"
-FCCEE_PROMPT_EDGE = "#D55E00"
+# FCC-ee projection accent palette. These match the signature-topology map in
+# analysis/fccee_projection.py: invisible is blue and prompt/resolved is red.
+FCCEE_INVISIBLE_FILL = "#1d6fce"
+FCCEE_INVISIBLE_EDGE = "#1d6fce"
+FCCEE_PROMPT_FILL = "#e63946"
+FCCEE_PROMPT_EDGE = "#e63946"
 FCCEE_LABEL_COLOR = "white"
 LABEL_OUTLINE = [pe.withStroke(linewidth=2.8, foreground="0.12", alpha=0.88)]
 SMALL_LABEL_OUTLINE = [pe.withStroke(linewidth=2.1, foreground="0.12", alpha=0.85)]
@@ -472,6 +471,7 @@ def _add_manual_label(
     color: str = "white",
     ha: str = "center",
     va: str = "center",
+    weight: str = "bold",
 ) -> None:
     xmin, xmax = ax.get_xlim()
     ymin, ymax = ax.get_ylim()
@@ -483,6 +483,7 @@ def _add_manual_label(
         text,
         color=color,
         fontsize=fontsize,
+        fontweight=weight,
         rotation=rotation,
         ha=ha,
         va=va,
@@ -515,16 +516,17 @@ def _add_closeup_constraint_labels(ax: plt.Axes) -> None:
             text.set_visible(False)
 
     label_color = "white"
-    _add_manual_label(ax, "PrimEx", 2.0e7, 2.0e-4, rotation=-63, fontsize=10.5, color=label_color)
-    _add_manual_label(ax, "Beam dumps", 7.5e7, 3.5e-5, rotation=-56, fontsize=12.0, color=label_color)
-    _add_manual_label(ax, "OPAL", 1.2e8, 3.0e-2, fontsize=12.0, color=label_color)
-    _add_manual_label(ax, "LEP", 4.2e8, 1.5e-2, fontsize=14.0, color=label_color)
-    _add_manual_label(ax, "Belle II", 7.5e8, 1.5e-3, rotation=12, fontsize=11.5, color=label_color)
-    _add_manual_label(ax, "BESIII", 6.5e8, 1.4e-4, fontsize=11.0, color=label_color)
-    _add_manual_label(ax, "BaBar", 3.5e10, 7.0e-3, fontsize=14.0, color=label_color)
-    _add_manual_label(ax, "ATLAS", 6.0e9, 3.2e-5, fontsize=11.0, color=label_color)
-    _add_manual_label(ax, "CMS", 8.0e10, 5.0e-4, fontsize=11.0, color=label_color)
-    _add_manual_label(ax, "LHC", 1.4e11, 2.5e-5, fontsize=11.0, color=label_color)
+    _add_manual_label(ax, "PrimEx", 1.9e7, 2.2e-4, rotation=-63, fontsize=13.0, color=label_color)
+    _add_manual_label(ax, "Beam dumps", 5.8e7, 3.0e-5, rotation=-57, fontsize=14.0, color=label_color)
+    _add_manual_label(ax, "OPAL", 1.7e8, 3.4e-2, fontsize=14.0, color=label_color)
+    _add_manual_label(ax, "LEP", 6.0e8, 1.5e-2, fontsize=16.0, color=label_color)
+    _add_manual_label(ax, "Belle II", 1.55e9, 3.55e-3, rotation=13, fontsize=14.0, color=label_color)
+    _add_manual_label(ax, "BESIII", 2.7e8, 5.0e-4, fontsize=13.5, color=label_color)
+    _add_manual_label(ax, "BaBar", 2.7e10, 6.5e-3, fontsize=16.0, color=label_color)
+    _add_manual_label(ax, "ATLAS", 9.5e9, 2.8e-4, fontsize=13.0, color=label_color)
+    _add_manual_label(ax, "CMS", 8.0e10, 7.0e-4, fontsize=13.0, color=label_color)
+    _add_manual_label(ax, "LHC", 4.4e11, 7.0e-3, fontsize=13.0, color=label_color)
+    _add_manual_label(ax, "Dark matter\n/ cosmology", 3.2e10, 1.7e-6, fontsize=18.0, color=label_color)
 
 
 def _simplify_full_landscape_labels(ax: plt.Axes) -> None:
@@ -634,7 +636,7 @@ def _plot_fcc_ee_projection(ax: plt.Axes, projection_path: Path) -> None:
                     label_x, label_y,
                     "FCC-ee\ninvisible",
                     color=FCCEE_LABEL_COLOR,
-                    fontsize=14,
+                    fontsize=17,
                     fontweight="bold",
                     ha="center", va="center",
                     path_effects=LABEL_OUTLINE,
@@ -655,13 +657,13 @@ def _plot_fcc_ee_projection(ax: plt.Axes, projection_path: Path) -> None:
         i = _label_anchor(x_ev, 0.74 if is_closeup else 0.86)
         contour_y = max(y[i], ymin)
         if is_closeup:
-            label_x = x_ev[i]
-            label_y = float(np.clip(contour_y * 5.0, contour_y * 3.0, ymax * 0.25))
+            label_x = 2.8e10
+            label_y = 1.1e-4
             ax.text(
                 label_x, label_y,
                 "FCC-ee\nprompt/resolved",
                 color=FCCEE_LABEL_COLOR,
-                fontsize=13,
+                fontsize=16,
                 fontweight="bold",
                 ha="center", va="center",
                 path_effects=LABEL_OUTLINE,
@@ -705,7 +707,7 @@ def _build_project_plot(
     # overlay text, which manages its own colors.
     _apply_landscape_color_scheme(ax)
     _recolor_constraint_labels_white(ax)
-    if include_fcc_ee:
+    if constraint_set == "full":
         _simplify_full_landscape_labels(ax)
     _add_qcd_axion_label(ax)
     if include_fcc_ee:
@@ -716,7 +718,7 @@ def _build_project_plot(
     # (generic mode has a combined legend already included in build_generic_alp_plot).
     if include_fcc_ee and constraint_set == "full":
         _add_fcc_ee_legend(ax)
-    if not include_fcc_ee and constraint_set == "full":
+    if not include_fcc_ee and constraint_set == "full" and not _is_fcc_ee_closeup(ax):
         _add_landscape_legend(ax)
     return fig, ax
 
@@ -866,9 +868,10 @@ def make_combined_plot(
 
     full_panel.imshow(full_image, origin="upper")
     zoom_panel.imshow(zoom_image, origin="upper")
+    zoom_title = "FCC-ee close-up" if include_fcc_ee else "Detector-search close-up"
     for panel, image, title in (
         (full_panel, full_image, "Full ALP-photon landscape"),
-        (zoom_panel, zoom_image, "FCC-ee close-up"),
+        (zoom_panel, zoom_image, zoom_title),
     ):
         height, width = image.shape[:2]
         panel.set_xlim(0, width)

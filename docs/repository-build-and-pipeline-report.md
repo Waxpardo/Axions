@@ -238,6 +238,15 @@ The implemented contour regions are:
 Displaced and merged searches need dedicated reconstruction and background
 models, so they are not claimed as exclusion contours in the current result.
 
+For the checked-in `180 x 180` FCC-ee grid, the paper-draft classification is:
+
+| Region | Grid points | Fraction |
+|---|---:|---:|
+| Prompt/resolved | 14,171 | 43.7% |
+| Invisible | 10,452 | 32.3% |
+| Merged | 5,989 | 18.5% |
+| Displaced/resolved | 1,788 | 5.5% |
+
 ## 6. External Sources and Imported Material
 
 The exact file-by-file source information is in
@@ -384,6 +393,13 @@ N_{B,\mathrm{bin}}=
 \sigma_B\mathcal{L}
 \frac{N_{\mathrm{raw,bin}}}{N_{\mathrm{generated}}}.
 $$
+
+The current paper-draft background inputs are `10000` generated events for each
+channel. The resolved `e+e- -> gamma gamma gamma` sample has
+`sigma = 7.3063 pb`, 23,592 diphoton-pair entries, and `2.58e9` expected
+entries at `150 ab^-1`. The invisible `e+e- -> gamma nu nu~` sample has
+`sigma = 134.885 pb`, 2,684 one-photon recoil entries, and `5.43e9` expected
+entries at `150 ab^-1`.
 
 `analysis/fccee_background_yields.py` builds older window-yield diagnostic
 background tables. These are retained for checks, but the binned method is the
@@ -897,27 +913,29 @@ results/fccee/fccee_zpole_signature_classification.png
 
 ### 9.13 Rebuild the Money Plots
 
-Full landscape with astrophysical, cosmological, dark-matter, lab, collider,
-and QCD axion reference regions:
+Intro landscape with astrophysical, cosmological, dark-matter, lab, collider,
+and QCD axion reference regions, shown as a full plot plus detector-search
+close-up:
 
 ```bash
-python analysis/make_axionlimits_style_plot.py \
+.venv/bin/python analysis/make_axionlimits_style_plot.py \
   --axionlimits-dir external/AxionLimits \
   --projection results/fccee/fccee_projection.csv \
   --constraint-set full \
-  --output-stem results/fccee/money_plot_alp_full \
-  --also-save-as results/fccee/money_plot \
-  --combined-output-stem results/fccee/money_plot_alp_full_combined
+  --no-fcc-ee \
+  --output-stem results/fccee/axionlimits_alp_landscape_intro \
+  --combined-output-stem results/fccee/axionlimits_alp_landscape_intro
 ```
 
 FCC-ee close-up:
 
 ```bash
-python analysis/make_axionlimits_style_plot.py \
+.venv/bin/python analysis/make_axionlimits_style_plot.py \
   --axionlimits-dir external/AxionLimits \
   --projection results/fccee/fccee_projection.csv \
   --constraint-set full \
   --output-stem results/fccee/money_plot_alp_full_closeup \
+  --also-save-as results/fccee/money_plot \
   --m-min 1e7 \
   --m-max 1e12 \
   --g-min 1e-8 \
@@ -970,6 +988,19 @@ The invisible branch can have two roots because production grows like $g^2$,
 but the probability to survive the detector decreases at large $g$. Therefore
 the output has `invisible_lower` and `invisible_upper`. The prompt/resolved
 branch is monotonic and appears as `resolved_prompt`.
+
+The current detector-corrected contour used in `paper_draft.tex` is:
+
+| Branch | Mass span | Coupling span | Robustness note |
+|---|---:|---:|---|
+| `invisible_lower` | `0.01--0.92 GeV` | `5.5e-7--7.3e-7 GeV^-1` | robust production/survival floor |
+| `invisible_upper` | `0.01--0.92 GeV` | `1.3e-6--5.5e-2 GeV^-1` | short-lifetime ceiling; fragile at low mass |
+| `resolved_prompt` | `0.61--80 GeV` | `1.1e-5--2.9e-4 GeV^-1` | robust prompt/resolved contour |
+
+The full-analysis correction map gives mean `C_Delphes` values of `0.998` for
+`invisible_lower`, `7.8e6` for `invisible_upper`, and `1.02` for
+`resolved_prompt`. The large invisible-upper value is why that branch should be
+quoted as directional rather than precise.
 
 ## 11. Why Some Choices May Look Unusual
 
@@ -1046,6 +1077,12 @@ The repository currently contains the pieces needed for the project deliverable:
 | Money plots | `results/fccee/money_plot_alp_full*.png` and `.pdf` |
 | Setup and run documentation | `README.md`, `docs/`, selected directory READMEs, and `Makefile` |
 | File provenance | `docs/file-provenance-report.md` |
+
+The paper-draft headline result is an FCC-ee Z-pole projection at
+`sqrt(s)=91.2 GeV` and `150 ab^-1`, with invisible sensitivity over
+`m_a=0.01--0.92 GeV` near `g_agg=5.5e-7 GeV^-1` on the lower branch and
+prompt/resolved sensitivity over `m_a=0.61--80 GeV` at
+`g_agg=1.1e-5--2.9e-4 GeV^-1`.
 
 The main limitations are physics limitations, not missing infrastructure:
 

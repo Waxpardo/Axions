@@ -22,9 +22,10 @@
 #
 # Run `make help` (or just `make`) for an overview.
 
-PYTHON      ?= python3
 VENV        := .venv
 VENV_BIN    := $(VENV)/bin
+SYSTEM_PYTHON ?= python3
+PYTHON      ?= $(VENV_BIN)/python
 AXIONLIMITS_DIR    := external/AxionLimits
 AXIONLIMITS_COMMIT := 7d375f4879b32406a239fe48d2615a4bfd9bc0bb
 FCCEE_CONFIG    := analysis/configs/fccee_zpole_inputs.json
@@ -84,7 +85,7 @@ help:
 ## ------------------------------------------------------------------------
 
 venv:
-	$(PYTHON) -m venv $(VENV)
+	$(SYSTEM_PYTHON) -m venv $(VENV)
 	$(VENV_BIN)/pip install --upgrade pip
 	$(VENV_BIN)/pip install -r env/requirements.txt
 	@echo ""
@@ -189,20 +190,21 @@ money-plots: axionlimits projection
 		--projection $(RESULTS_FCCEE)/fccee_projection.csv \
 		--constraint-set full \
 		--output-stem $(RESULTS_FCCEE)/money_plot_alp_full \
-		--also-save-as $(RESULTS_FCCEE)/money_plot \
 		--combined-output-stem $(RESULTS_FCCEE)/money_plot_alp_full_combined
 	$(PYTHON) analysis/make_axionlimits_style_plot.py \
 		--axionlimits-dir $(AXIONLIMITS_DIR) \
 		--projection $(RESULTS_FCCEE)/fccee_projection.csv \
 		--constraint-set full \
 		--output-stem $(RESULTS_FCCEE)/money_plot_alp_full_closeup \
+		--also-save-as $(RESULTS_FCCEE)/money_plot \
 		--m-min 1e7 --m-max 1e12 --g-min 1e-8 --g-max 1e-1
 	$(PYTHON) analysis/make_axionlimits_style_plot.py \
 		--axionlimits-dir $(AXIONLIMITS_DIR) \
 		--projection $(RESULTS_FCCEE)/fccee_projection.csv \
 		--constraint-set full \
 		--no-fcc-ee \
-		--output-stem $(RESULTS_FCCEE)/axionlimits_alp_landscape_intro
+		--output-stem $(RESULTS_FCCEE)/axionlimits_alp_landscape_intro \
+		--combined-output-stem $(RESULTS_FCCEE)/axionlimits_alp_landscape_intro
 
 local-all: theory-grid belle2-closure projection money-plots
 	@echo ""

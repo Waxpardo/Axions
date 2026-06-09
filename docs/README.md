@@ -38,6 +38,13 @@ runbooks, physics assumptions, validation notes, and references.
 Use the root `README.md` for the stable top-level map. Use this `docs/`
 directory for longer context and run history.
 
+The current physics-result wording should track `paper_draft.tex`. In
+particular, keep the docs aligned with the detector-corrected FCC-ee Z-pole
+projection at `sqrt(s)=91.2 GeV`, `L=150 ab^-1`, the invisible lower branch
+near `g_agg=5.5e-7 GeV^-1` over `m_a=0.01--0.92 GeV`, the prompt/resolved
+branch over `m_a=0.61--80 GeV`, and the caveat that the invisible upper branch
+is a rapidly varying lifetime boundary with large correction factors.
+
 When an assumption becomes part of the final result, put the machine-readable
 value in `analysis/configs/` and explain it in:
 

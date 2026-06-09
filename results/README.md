@@ -41,6 +41,17 @@ Directory:
 results/fccee/
 ```
 
+Paper-draft headline result:
+
+| Channel/feature | Current value |
+|---|---|
+| Collider setup | FCC-ee Z pole, `sqrt(s) = 91.2 GeV`, `L = 150 ab^-1` |
+| Invisible lower branch | `m_a = 0.01--0.92 GeV`, `g_agg = 5.5e-7--7.3e-7 GeV^-1` |
+| Invisible upper branch | `m_a = 0.01--0.92 GeV`, `g_agg = 1.3e-6--5.5e-2 GeV^-1`; numerically fragile lifetime ceiling |
+| Prompt-resolved branch | `m_a = 0.61--80 GeV`, `g_agg = 1.1e-5--2.9e-4 GeV^-1` |
+| Resolved threshold | `m_a ~= 0.597 GeV` from `Delta theta_res = 1.5 deg` |
+| Signature grid | 32,400 points: 14,171 prompt-resolved, 10,452 invisible, 5,989 merged, 1,788 displaced-resolved |
+
 Main files:
 
 | File | Meaning |
@@ -49,11 +60,11 @@ Main files:
 | `fccee_projection_summary.json` | Config, counts, background inclusion, and correction-map summary. |
 | `fccee_zpole_signature_classification.csv` | Classification of the full $(m_a,g_{a\gamma\gamma})$ plane. |
 | `fccee_zpole_signature_classification.png` | Signature-region plot. |
-| `money_plot_alp_full.png` / `.pdf` | Final full ALP landscape money plot, including DM/astro/cosmology and QCD axion reference regions. |
-| `money_plot_alp_full_closeup.png` / `.pdf` | FCC-ee-relevant close-up of the full ALP money plot. |
-| `money_plot_alp_full_combined.png` / `.pdf` | Presentation-style two-panel plot linking the full landscape to the FCC-ee close-up. |
-| `money_plot.png` / `.pdf` | Convenience copy of the final money plot. |
-| `axionlimits_alp_landscape_intro.png` / `.pdf` | Matching AxionLimits-only landscape for the paper introduction, without FCC-ee overlays. |
+| `money_plot_alp_full.png` / `.pdf` | Supporting full ALP landscape with FCC-ee overlays. |
+| `money_plot_alp_full_closeup.png` / `.pdf` | Final paper money plot: FCC-ee-relevant close-up with projected contours. |
+| `money_plot_alp_full_combined.png` / `.pdf` | Supporting presentation-style plot linking the full landscape to the FCC-ee close-up. |
+| `money_plot.png` / `.pdf` | Convenience copy of the final close-up money plot. |
+| `axionlimits_alp_landscape_intro.png` / `.pdf` | Paper introduction figure: AxionLimits-only full landscape plus detector-search close-up, without FCC-ee overlays. |
 | `background_signal_examples.png` / `.pdf` | Paper figure showing binned SM backgrounds with excluded/non-excluded ALP signal templates. |
 | `background_signal_examples_summary.csv` | Numerical values for the signal examples in the background-template figure. |
 
@@ -67,6 +78,14 @@ Input/intermediate files kept because they define the contour:
 | `alp_full_scan_summary.csv` | Per-point detector-level signal scan summary. |
 | `alp_full_analysis_efficiency_map.csv` | Branch-aware detector correction map used by the contour. |
 | `alp_full_analysis_efficiency_summary.json` | Summary of correction-map statistics. |
+
+The binned SM backgrounds in this directory are the full-stat 10,000-event
+samples used in the paper draft:
+
+| Channel | Process | Cross section | Histogram entries | Expected entries at `150 ab^-1` |
+|---|---|---:|---:|---:|
+| `resolved_prompt` | `e+ e- -> gamma gamma gamma` | `7.3063 pb` | 23,592 | `2.58e9` |
+| `invisible` | `e+ e- -> gamma nu nu~` | `134.885 pb` | 2,684 | `5.43e9` |
 
 ## What Is Not Stored Here
 

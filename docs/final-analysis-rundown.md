@@ -2,8 +2,8 @@
 
 This is the current runbook for the photophilic ALP project. It is written for
 a collaborator who has cloned the repository and wants to understand what is
-implemented, what assumptions are locked, and what still needs final production
-statistics.
+implemented, what assumptions are locked, and what numerical result is used in
+the current paper draft.
 
 ## Project Goal
 
@@ -22,6 +22,23 @@ published-contour closure test in `analysis/belle2_closure.py`. It reproduces
 the public Belle II boundary by inferring the effective signal-yield threshold
 implied by the digitized curve; it does not claim access to Belle II's private
 likelihood, background spectra, or reconstruction-efficiency maps.
+
+## Current Paper-Draft Result
+
+The current checked-in projection is the paper-draft result:
+
+| Branch/feature | Value |
+|---|---|
+| Invisible lower branch | `m_a = 0.01--0.92 GeV`, `g_agg = 5.5e-7--7.3e-7 GeV^-1` |
+| Invisible upper branch | `m_a = 0.01--0.92 GeV`, `g_agg = 1.3e-6--5.5e-2 GeV^-1`; lifetime ceiling |
+| Prompt/resolved branch | `m_a = 0.61--80 GeV`, `g_agg = 1.1e-5--2.9e-4 GeV^-1` |
+| Resolved threshold | `m_a ~= 0.597 GeV` from `Delta theta_res = 1.5 deg` |
+| Belle II closure | public-contour closure passes at `0.8%` level |
+
+The robust claims are the invisible lower branch, the prompt/resolved branch,
+and the topology map. The invisible upper branch should be described as a
+short-lifetime boundary with large detector-correction factors, not as a
+precision contour.
 
 ## Repository Map
 
@@ -68,10 +85,10 @@ angle assumptions in `docs/detector-assumptions-fccee-zpole.md`.
 
 | Region | Detector signature | Current status |
 |---|---|---|
-| Invisible | one recoil photon plus missing energy | FCC-ee contour |
-| Prompt resolved | recoil photon plus two resolved ALP photons | FCC-ee contour |
-| Displaced resolved | recoil photon plus displaced diphoton | classification only |
-| Merged | recoil photon plus merged ALP photon shower | classification only |
+| Invisible | one recoil photon plus missing energy | FCC-ee contour; 10,452 grid points |
+| Prompt resolved | recoil photon plus two resolved ALP photons | FCC-ee contour; 14,171 grid points |
+| Displaced resolved | recoil photon plus displaced diphoton | classification only; 1,788 grid points |
+| Merged | recoil photon plus merged ALP photon shower | classification only; 5,989 grid points |
 
 The current money plot therefore claims projected reach only for invisible and
 prompt-resolved signatures. Displaced and merged regions are interpretation
@@ -81,10 +98,10 @@ bands until dedicated detector efficiencies and backgrounds are added.
 
 The current background samples are:
 
-| Channel | MG5 process | Observable |
-|---|---|---|
-| `resolved_prompt` | `e+ e- -> gamma gamma gamma` | all Delphes photon-pair masses `M_gg` |
-| `invisible` | `e+ e- -> gamma nu nu~` | Delphes one-photon recoil energy |
+| Channel | MG5 process | Observable | Current full-stat input |
+|---|---|---|---|
+| `resolved_prompt` | `e+ e- -> gamma gamma gamma` | all Delphes photon-pair masses `M_gg` | `sigma = 7.3063 pb`, 10,000 generated events, 23,592 pair entries, `2.58e9` expected entries at `150 ab^-1` |
+| `invisible` | `e+ e- -> gamma nu nu~` | Delphes one-photon recoil energy | `sigma = 134.885 pb`, 10,000 generated events, 2,684 recoil entries, `5.43e9` expected entries at `150 ab^-1` |
 
 Backgrounds are normalized with:
 
@@ -195,13 +212,14 @@ separately and overlaid transparently.
 
 ## Full-Production Commands
 
-Submit the full-stat SM background jobs on Nikhef:
+To reproduce the full-stat SM background jobs on Nikhef:
 
 ```bash
 condor_submit condor/submit_background_scan.sub
 ```
 
-Submit the detector-level signal points generated from the projected contour:
+To reproduce the detector-level signal points generated from the projected
+contour:
 
 ```bash
 condor_submit condor/submit_alp_full_projection_scan.sub
@@ -232,7 +250,7 @@ ALP full scan: Condor cluster 4797476, 284 jobs, campaign fccee_z_full_projectio
 Gate 1 and channel-aware detector validation: 284 / 284 passed
 ```
 
-Recheck the active signal scan on Nikhef with:
+For a rerun or debugging session, check the signal-scan queue on Nikhef with:
 
 ```bash
 condor_q 4797476 -wide
@@ -252,8 +270,8 @@ a branch-aware multiplicative detector correction. It is still an interpolation
 layer built from the completed contour-point signal scan, not a fresh Delphes
 campaign at the corrected contour points.
 
-The full-stat background files have already replaced the smoke-level inputs in
-`results/fccee/`. Rebuild them from the completed background ROOT files with:
+The full-stat background files are the active inputs in `results/fccee/`.
+Rebuild them from the completed background ROOT files with:
 
 ```bash
 python3 analysis/fccee_binned_background.py \
@@ -265,7 +283,8 @@ python3 analysis/fccee_binned_background.py \
   --summary-json results/fccee/fccee_background_bins_summary.json
 ```
 
-After the signal jobs finish, collect validation summaries:
+To reproduce the checked-in summaries from the completed signal jobs, collect
+validation summaries with:
 
 ```bash
 python3 analysis/collect_alp_full_scan.py \
@@ -286,29 +305,31 @@ python3 analysis/fccee_projection.py \
   --n-g 180
 ```
 
-And rebuild the full ALP money plot:
+Build the AxionLimits-only intro landscape as a full plot plus detector-search
+close-up:
 
 ```bash
-python3 analysis/make_axionlimits_style_plot.py \
+.venv/bin/python analysis/make_axionlimits_style_plot.py \
   --axionlimits-dir external/AxionLimits \
   --projection results/fccee/fccee_projection.csv \
   --constraint-set full \
-  --output-stem results/fccee/money_plot_alp_full \
-  --also-save-as results/fccee/money_plot \
-  --combined-output-stem results/fccee/money_plot_alp_full_combined
+  --no-fcc-ee \
+  --output-stem results/fccee/axionlimits_alp_landscape_intro \
+  --combined-output-stem results/fccee/axionlimits_alp_landscape_intro
 ```
 
 Use `--constraint-set generic` only for a diagnostic plot that hides
 dark-matter and cosmology-assuming regions.
 
-Build the FCC-ee close-up with:
+Build the FCC-ee close-up money plot with:
 
 ```bash
-python3 analysis/make_axionlimits_style_plot.py \
+.venv/bin/python analysis/make_axionlimits_style_plot.py \
   --axionlimits-dir external/AxionLimits \
   --projection results/fccee/fccee_projection.csv \
   --constraint-set full \
   --output-stem results/fccee/money_plot_alp_full_closeup \
+  --also-save-as results/fccee/money_plot \
   --m-min 1e7 \
   --m-max 1e12 \
   --g-min 1e-8 \
@@ -330,12 +351,13 @@ required channels, and the checked-in FCC-ee projection/money plot now use those
 full-stat binned background files. The channel-aware detector-level signal scan
 also completed with all 284 points passing.
 
-The detector-level selected fractions from the full ALP scan are:
+The detector-level selected fractions used by the full-analysis efficiency map
+are:
 
 ```text
-invisible_lower: mean 0.950, range 0.512--0.977
-invisible_upper: mean 0.0179, range 0.0044--0.1935
-resolved_prompt: mean 0.635, range 0.209--0.919
+invisible_lower: mean 0.959, range 0.516--0.985
+invisible_upper: mean 0.0187, range 0.0059--0.1967
+resolved_prompt: mean 0.886, range 0.867--0.952
 ```
 
 The full-analysis efficiency map additionally uses the actual binned analysis

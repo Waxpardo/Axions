@@ -59,7 +59,8 @@ The plotting interface now expects projection CSVs with:
 m_a_GeV,g_agg_GeV_inv,channel
 ```
 
-where `channel` can be `invisible`, `resolved`, or another analysis label.
+where the final FCC-ee labels are `invisible_lower`, `invisible_upper`, and
+`resolved_prompt`.
 
 ## Signature Regions
 
@@ -83,33 +84,50 @@ The detector-level categories are:
 - merged: `ell_a < L_max` and
   `Delta theta_gamma_gamma < Delta theta_res`
 
-For this project, the core deliverable should implement invisible and resolved
-first. Merged and displaced are useful discussion regions unless the analysis
-code is extended.
+For this project, the core deliverable implements invisible and resolved
+contours. Merged and displaced are classified discussion regions unless the
+analysis code is extended.
 
-## Current Technical Plan
+## Current Technical State
 
-The FCC-ee limit calculator is now implemented. The active production plan is:
+The FCC-ee limit calculator, full-stat backgrounds, 284-point detector-level
+signal scan, branch-aware Delphes correction map, and final money plots are now
+implemented. The paper-draft result uses:
 
-1. Produce full-stat SM backgrounds for `gamma gamma gamma` and `gamma nu nu~`.
-2. Build `results/fccee/fccee_background_bins.csv`.
-3. Run the binned FCC-ee projection with `Delta chi2 = 2.71` and a 3-event
-   floor.
-4. Run the detector-level ALP scan points generated from the projection.
-5. Collect full-scan summaries and use them to replace flat photon efficiencies
-   with Delphes-derived efficiencies.
-6. Regenerate `results/fccee/fccee_projection.csv` and the money plot:
+1. Full-stat SM backgrounds for `gamma gamma gamma` and `gamma nu nu~`.
+2. `results/fccee/fccee_background_bins.csv` as the binned background input.
+3. A binned Asimov `Delta chi2 = 2.71` limit with a 3-event floor.
+4. `results/fccee/alp_full_analysis_efficiency_map.csv` as the branch-aware
+   detector-correction map.
+5. `results/fccee/fccee_projection.csv` as the detector-corrected contour.
+
+The current headline spans are:
+
+```text
+invisible_lower: 0.01--0.92 GeV at 5.5e-7--7.3e-7 GeV^-1
+invisible_upper: 0.01--0.92 GeV at 1.3e-6--5.5e-2 GeV^-1
+resolved_prompt: 0.61--80 GeV at 1.1e-5--2.9e-4 GeV^-1
+```
+
+Regenerate the final plotting artifacts with:
 
 ```bash
-python analysis/make_axionlimits_style_plot.py \
+.venv/bin/python analysis/make_axionlimits_style_plot.py \
   --axionlimits-dir external/AxionLimits \
   --projection results/fccee/fccee_projection.csv \
   --constraint-set full \
   --output-stem results/fccee/money_plot_alp_full \
-  --also-save-as results/fccee/money_plot \
   --combined-output-stem results/fccee/money_plot_alp_full_combined
+
+.venv/bin/python analysis/make_axionlimits_style_plot.py \
+  --axionlimits-dir external/AxionLimits \
+  --projection results/fccee/fccee_projection.csv \
+  --constraint-set full \
+  --output-stem results/fccee/money_plot_alp_full_closeup \
+  --also-save-as results/fccee/money_plot \
+  --m-min 1e7 --m-max 1e12 --g-min 1e-8 --g-max 1e-1
 ```
 
-The checked-in projection is a working analysis product, but the numerical
-limits should be updated after the full-stat Condor outputs replace the current
-smoke-level background files.
+The invisible upper branch should be presented as a short-lifetime boundary
+rather than a precision contour because its low-mass tail has very large
+detector-correction factors.

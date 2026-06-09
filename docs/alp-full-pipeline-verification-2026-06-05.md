@@ -111,12 +111,24 @@ resolved_best_mgg_mean_GeV ~= 1.03
 ```
 
 This verifies that the FCC-ee signal pipeline is operational. The full
-projection scan is handled by:
+projection scan is reproduced with:
 
 ```bash
 condor/submit_alp_full_projection_scan.sub
 condor/alp_full_points_fccee_z_projection.txt
 ```
+
+The channel-aware scan used by the current paper draft has also completed:
+
+```text
+campaign = fccee_z_full_projection_fullbg_channelaware
+points = 284
+Gate 1 passed = 284
+channel-aware detector validation passed = 284
+```
+
+Those results feed the branch-aware full-analysis correction map in
+`results/fccee/alp_full_analysis_efficiency_map.csv`.
 
 ## Delphes Verbosity
 

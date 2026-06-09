@@ -3,6 +3,20 @@
 This note maps the completed repository artifacts into the final course
 deliverables.
 
+## Current Paper-Draft Anchors
+
+`paper_draft.tex` is the current narrative source of truth. The Markdown docs
+should preserve these result statements:
+
+| Item | Current statement |
+|---|---|
+| FCC-ee setup | `sqrt(s)=91.2 GeV`, `L=150 ab^-1`, IDEA-style Delphes |
+| Invisible reach | `m_a=0.01--0.92 GeV`, lower branch near `g_agg=5.5e-7 GeV^-1` |
+| Invisible upper branch | short-lifetime boundary up to `g_agg ~= 5.5e-2 GeV^-1`; qualitatively useful but numerically fragile |
+| Prompt/resolved reach | `m_a=0.61--80 GeV`, `g_agg=1.1e-5--2.9e-4 GeV^-1` |
+| Signature grid | 32,400 points: 14,171 prompt/resolved, 10,452 invisible, 5,989 merged, 1,788 displaced/resolved |
+| Backgrounds | full-stat `gamma gamma gamma` and `gamma nu nu~` samples, binned and normalized to `150 ab^-1` |
+
 ## Report Structure
 
 Target length: 4000--7000 words excluding references.
@@ -124,6 +138,9 @@ Content:
 - FCC-ee-relevant close-up plot.
 - Discussion of invisible lower/upper branches.
 - Discussion of prompt/resolved reach.
+- State that the invisible lower branch and prompt/resolved branch are the
+  robust headline results, while the invisible upper branch is a lifetime
+  ceiling with large correction factors in the low-mass tail.
 
 ### 7. Limitations And Outlook
 

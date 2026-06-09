@@ -1,7 +1,7 @@
 # FCC-ee Z-Pole Projection, 2026-06-05
 
 This note records the FCC-ee Z-pole ALP projection machinery, the associated
-IDEA-card smoke test, and the current production-status caveats.
+IDEA-card smoke test, and the current detector-corrected paper-draft result.
 
 ## Inputs
 
@@ -48,6 +48,21 @@ near:
 ```text
 m_a ~= 0.597 GeV
 ```
+
+## Current Paper-Draft Result
+
+The checked-in projection is the result summarized in `paper_draft.tex`:
+
+| Branch | Rows | Mass span | Coupling span | Interpretation |
+|---|---:|---:|---:|---|
+| `invisible_lower` | 91 | `0.01--0.92 GeV` | `5.5e-7--7.3e-7 GeV^-1` | robust production/survival floor |
+| `invisible_upper` | 91 | `0.01--0.92 GeV` | `1.3e-6--5.5e-2 GeV^-1` | short-lifetime ceiling; numerically fragile at low mass |
+| `resolved_prompt` | 98 | `0.61--80 GeV` | `1.1e-5--2.9e-4 GeV^-1` | robust prompt/resolved contour |
+
+The invisible lower branch and the prompt-resolved branch are the robust
+headline projections. The upper invisible branch is retained to show where the
+ALP becomes too short-lived to escape, but it has very large detector-correction
+factors in part of the low-mass tail and should be described qualitatively.
 
 ## Background Inputs
 
@@ -113,6 +128,8 @@ background campaign:
 Condor cluster: 4796877
 resolved_3gamma: 10000 generated events, sigma = 7.3063 pb
 invisible_gamma_nunu: 10000 generated events, sigma = 134.88513286 pb
+resolved_3gamma selected entries: 23592 diphoton pairs
+invisible_gamma_nunu selected entries: 2684 recoil photons
 ```
 
 The binned background totals at `150 ab^-1` are:
@@ -173,6 +190,14 @@ projection. It still uses the analytic lifetime probabilities and Gaussian
 signal shapes for the contour solve; the Delphes map is applied as an
 interpolated efficiency correction layer.
 
+The detector-correction map currently gives:
+
+```text
+invisible_lower: mean C_Delphes = 0.998, range 0.969--1.003
+invisible_upper: mean C_Delphes = 7.8e6, range 0.919--1.49e8
+resolved_prompt: mean C_Delphes = 1.02, range 0.900--2.62
+```
+
 ## Generated Files
 
 The generated FCC-ee outputs are:
@@ -206,6 +231,16 @@ invisible
 merged
 displaced_resolved
 prompt_resolved
+```
+
+The checked-in signature counts are:
+
+```text
+prompt_resolved: 14171
+invisible: 10452
+merged: 5989
+displaced_resolved: 1788
+total: 32400
 ```
 
 ## IDEA Delphes Smoke Test

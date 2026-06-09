@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-06-06.
+Last updated: 2026-06-09.
 
 This file is a short checklist for collaborators. The detailed methods are in
 `docs/final-analysis-rundown.md`.
@@ -40,6 +40,15 @@ Delphes-derived branch-aware efficiency corrections
 analytic production and lifetime scan
 ```
 
+Paper-draft numerical summary:
+
+```text
+invisible_lower: m_a = 0.01--0.92 GeV, g_agg = 5.5e-7--7.3e-7 GeV^-1
+invisible_upper: m_a = 0.01--0.92 GeV, g_agg = 1.3e-6--5.5e-2 GeV^-1
+resolved_prompt: m_a = 0.61--80 GeV, g_agg = 1.1e-5--2.9e-4 GeV^-1
+resolved threshold: m_a ~= 0.597 GeV
+```
+
 ## Validation Summary
 
 Belle II closure:
@@ -59,6 +68,8 @@ invisible_lower rows = 91
 invisible_upper rows = 91
 binned backgrounds included = true
 efficiency corrections included = true
+signature grid = 32400 rows
+signature counts = prompt_resolved 14171, invisible 10452, merged 5989, displaced_resolved 1788
 ```
 
 Detector-level signal campaign:
