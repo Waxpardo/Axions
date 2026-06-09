@@ -184,6 +184,10 @@ background-signal-examples: projection
 prompt-resolved-mass-example: projection
 	$(PYTHON) analysis/plot_prompt_resolved_invariant_mass.py \
 		--config $(FCCEE_CONFIG) \
+		--mass 0.8 \
+		--coupling 8.0e-5 \
+		--x-min 0.0 \
+		--x-max 2.5 \
 		--out $(RESULTS_FCCEE)/prompt_resolved_invariant_mass_example.png \
 		--summary $(RESULTS_FCCEE)/prompt_resolved_invariant_mass_example_summary.csv
 

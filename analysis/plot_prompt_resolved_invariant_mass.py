@@ -63,6 +63,15 @@ def poisson_errors(counts: np.ndarray) -> np.ndarray:
     return np.sqrt(np.maximum(counts, 1.0))
 
 
+def latex_scientific(value: float) -> str:
+    """Format a number as compact scientific notation for mathtext labels."""
+    if value == 0.0:
+        return "0"
+    exponent = int(math.floor(math.log10(abs(value))))
+    mantissa = value / (10.0**exponent)
+    return rf"{mantissa:.1f}\times10^{{{exponent}}}"
+
+
 def load_resolved_background(config: dict[str, Any], path: Path | None) -> pd.DataFrame:
     bins = load_background_bins(config, path)
     if bins is None:
@@ -254,18 +263,20 @@ def make_plot(
         ha="right",
         va="bottom",
     )
+    process_label_y = 0.66 if float(window["bin_high_GeV"].max()) <= 3.5 else 0.30
     ax.text(
         0.03,
-        0.30,
+        process_label_y,
         r"$e^+e^-\to\gamma a,\ a\to\gamma\gamma$" "\n"
-        rf"$m_a={m_a:g}$ GeV, $g_{{a\gamma\gamma}}={g_agg:.1e}$ GeV$^{{-1}}$",
+        rf"$m_a={m_a:g}$ GeV, $g_{{a\gamma\gamma}}={latex_scientific(g_agg)}$ GeV$^{{-1}}$",
         transform=ax.transAxes,
         fontsize=12,
         va="bottom",
     )
+    topology_label_y = 0.64 if float(window["bin_high_GeV"].max()) <= 3.5 else 0.88
     ax.text(
         0.97,
-        0.88,
+        topology_label_y,
         "Prompt-resolved\nIDEA-like Delphes",
         transform=ax.transAxes,
         fontsize=12,
